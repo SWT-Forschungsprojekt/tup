@@ -1,3 +1,11 @@
+/.idea
+/*build*
+/deps
+/.pkg.mutex
+/.clang-tidy
+/.vs
+/out
+
 # Prerequisites
 *.d
 
