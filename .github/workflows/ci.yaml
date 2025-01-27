@@ -15,6 +15,18 @@ concurrency:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - preset: linux-amd64-release
+            artifact: linux-amd64
+          - preset: linux-arm64-release
+            artifact: linux-arm64
+            emulator: qemu-aarch64-static
+          - preset: clang-tidy
+          - preset: linux-sanitizer
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,14 +38,15 @@ jobs:
       - name: CMake and Ninja
         run: |
           mkdir build
+          cmake -G Ninja -S . -B build
           cd build
-          cmake .. -G Ninja -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" -DCMAKE_EXE_LINKER_FLAGS="-static"
           ninja
 
       - name: Upload Distribution
+        if: ${{ matrix.config.artifact != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: tup-linux
+          name: tup-${{ matrix.config.artifact }}
           path: build/tup
 
   windows:
