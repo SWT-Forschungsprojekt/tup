@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+  release:
+    types:
+      - published
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: CMake and Ninja
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G Ninja -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" -DCMAKE_EXE_LINKER_FLAGS="-static"
+          ninja
+
+      - name: Upload Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: tup-linux
+          path: build/tup
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CMake and Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: CMake and Ninja
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          ninja
+
+      - name: Upload Windows Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: tup-windows
+          path: build/tup.exe
