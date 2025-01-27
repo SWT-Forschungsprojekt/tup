@@ -19,13 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - preset: linux-amd64-release
+          - preset: linux-amd64
             artifact: linux-amd64
-          - preset: linux-arm64-release
+          - preset: linux-arm64
             artifact: linux-arm64
             emulator: qemu-aarch64-static
-          - preset: clang-tidy
-          - preset: linux-sanitizer
 
     steps:
       - uses: actions/checkout@v4
@@ -38,12 +36,11 @@ jobs:
       - name: CMake and Ninja
         run: |
           mkdir build
-          cmake -G Ninja -S . -B build
+          cmake -G Ninja -S . -B build --preset=${{ matrix.config.preset }}
           cd build
           ninja
 
       - name: Upload Distribution
-        if: ${{ matrix.config.artifact != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: tup-${{ matrix.config.artifact }}

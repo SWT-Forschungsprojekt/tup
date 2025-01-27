@@ -66,34 +66,22 @@
       }
     },
     {
-      "name": "linux-amd64-release",
-      "displayName": "Linux AMD64 Release",
+      "name": "linux-amd64",
+      "displayName": "Linux AMD64",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/amd64-release",
-      "toolchainFile": "/opt/x86_64-multilib-linux-musl/toolchain-amd64.cmake",
       "cacheVariables": {
-        "CMAKE_EXE_LINKER_FLAGS": "-B/opt/mold",
-        "CMAKE_BUILD_TYPE": "Release",
-        "OSR_MIMALLOC": "ON"
-      },
-      "environment": {
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        "CMAKE_CXX_FLAGS": "-static-libgcc -static-libstdc++",
+        "CMAKE_EXE_LINKER_FLAGS": "-static"
       }
     },
     {
-      "name": "linux-arm64-release",
-      "displayName": "Linux ARM64 Release",
+      "name": "linux-arm64",
+      "displayName": "Linux ARM64",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/arm64-release",
-      "toolchainFile": "/opt/aarch64-unknown-linux-musl/toolchain-arm64.cmake",
       "cacheVariables": {
-        "CMAKE_CROSSCOMPILING_EMULATOR": "qemu-aarch64-static",
-        "CMAKE_EXE_LINKER_FLAGS": "-B/opt/mold",
-        "CMAKE_BUILD_TYPE": "Release",
-        "OSR_MIMALLOC": "ON"
-      },
-      "environment": {
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        "CMAKE_CROSSCOMPILING_EMULATOR": "qemu-aarch64-static"
       }
     },
     {
@@ -108,11 +96,6 @@
         "CMAKE_C_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
         "CMAKE_CXX_FLAGS": "-stdlib=libc++ -fsanitize=address,undefined -fno-omit-frame-pointer",
         "CMAKE_EXE_LINKER_FLAGS": "-lc++abi -fuse-ld=/opt/mold/ld"
-      },
-      "environment": {
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "CXX": "/usr/bin/g++-13",
-        "CC": "/usr/bin/gcc-13"
       }
     },
     {
@@ -122,11 +105,6 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
-      },
-      "environment": {
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "CXX": "/usr/bin/g++-13",
-        "CC": "/usr/bin/gcc-13"
       }
     },
     {
@@ -137,11 +115,6 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_EXE_LINKER_FLAGS": "-B/opt/mold"
-      },
-      "environment": {
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "CXX": "/usr/bin/g++-13",
-        "CC": "/usr/bin/gcc-13"
       }
     },
     {
@@ -154,12 +127,7 @@
         "CMAKE_CXX_COMPILER": "clang++-18",
         "CMAKE_CXX_FLAGS": "-stdlib=libc++",
         "CMAKE_EXE_LINKER_FLAGS": "-lc++abi",
-        "CMAKE_BUILD_TYPE": "Release",
-        "OSR_LINT": "On"
-      },
-      "environment": {
-        "BUILDCACHE_LUA_PATH": "/opt/buildcache/share/lua-examples",
-        "PATH": "/opt:/opt/cmake-3.26.3-linux-x86_64/bin:/opt/buildcache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -173,12 +141,12 @@
       "configurePreset": "macos-arm64"
     },
     {
-      "name": "linux-amd64-release",
-      "configurePreset": "linux-amd64-release"
+      "name": "linux-amd64",
+      "configurePreset": "linux-amd64"
     },
     {
-      "name": "linux-arm64-release",
-      "configurePreset": "linux-arm64-release"
+      "name": "linux-arm64",
+      "configurePreset": "linux-arm64"
     },
     {
       "name": "clang-tidy",
