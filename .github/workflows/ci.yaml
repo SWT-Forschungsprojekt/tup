@@ -23,7 +23,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake
 
-      - name: CMake
+      - name: CMake and Ninja
         run: |
           mkdir build
           cd build
@@ -35,3 +35,24 @@ jobs:
         with:
           name: tup-linux
           path: build/tup
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CMake and Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: CMake and Ninja
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          ninja
+
+      - name: Upload Windows Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: tup-windows
+          path: build/tup.exe
