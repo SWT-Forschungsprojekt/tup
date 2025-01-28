@@ -19,6 +19,8 @@ file(GLOB_RECURSE sources      exe/*.cc)
 # add the data to the target, so it becomes visible in some IDE
 add_executable(tup ${sources})
 
+target_link_libraries(tup PRIVATE conf)
+
 # include custom configuration from motis-project
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)

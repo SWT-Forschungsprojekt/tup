@@ -1,0 +1,4 @@
+[conf]
+  url=git@github.com:motis-project/conf.git
+  branch=master
+  commit=f9bf4bd83bf55a2170725707e526cbacc45dcc66
