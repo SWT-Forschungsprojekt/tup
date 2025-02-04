@@ -19,7 +19,6 @@ namespace tup {
     tt_->locations_.resolve_timezones();
     location_rtee_ = std::make_unique<point_rtree<n::location_idx_t>>(
         create_location_rtree(*tt_));
-    init_rtt();
   }
 
   void data::load_shapes() {

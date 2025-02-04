@@ -98,7 +98,6 @@ cista::hash_t hash_file(fs::path const& p) {
 }
 
 data import(config const& c, fs::path const& data_path, bool const write) {
-  c.verify_input_files_exist();
 
   auto ec = std::error_code{};
   create_directories(data_path / "logs", ec);
@@ -195,8 +194,6 @@ data import(config const& c, fs::path const& data_path, bool const write) {
       if (write) {
         d.tt_->write(data_path / "tt.bin");
       }
-
-      d.init_rtt();
 
       if (c.timetable_->with_shapes_) {
         d.load_shapes();
