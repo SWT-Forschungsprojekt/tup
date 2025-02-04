@@ -6,3 +6,7 @@
   url=git@github.com:motis-project/nigiri.git
   branch=master
   commit=119e5de176d0ea41fef4939de612a498f242b238
+[utl]
+  url=git@github.com:motis-project/utl.git
+  branch=master
+  commit=d858ae815258dfbdf4fb355f41a466f11758cb7c
