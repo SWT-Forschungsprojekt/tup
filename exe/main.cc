@@ -6,7 +6,10 @@
 #include "conf/options_parser.h"
 #include "utl/progress_tracker.h"
 
+namespace po = boost::program_options;
 namespace fs = std::filesystem;
+
+using namespace tup;
 
 class settings final : public conf::configuration {
 public:
@@ -31,12 +34,13 @@ int main(const int argc, char const* argv[]) {
     return 0;
   }
   std::cout << "Config file: " << opt.config_file << std::endl;
+  auto c = config{};
   try {
     auto data_path = fs::path{"data"};
-
+    auto config_path = fs::path{"config.yml"};
+    auto desc = po::options_description{"Import Options"};
     auto const bars = utl::global_progress_bars{false};
-    import(opt, std::move(data_path));
-    auto data = data{data_path, opt};
+    import(c, std::move(data_path));
     std::cout << "Successfully imported GTFS data";
     return 0;
   } catch (std::exception const&) {

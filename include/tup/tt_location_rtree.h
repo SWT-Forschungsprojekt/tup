@@ -4,7 +4,7 @@
 
 #include "tup/point_rtree.h"
 
-namespace motis {
+namespace tup {
 
 inline point_rtree<nigiri::location_idx_t> create_location_rtree(
     nigiri::timetable const& tt) {
