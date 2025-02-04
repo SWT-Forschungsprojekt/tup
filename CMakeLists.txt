@@ -6,7 +6,7 @@ project(tup)
 file(GLOB_RECURSE tuplib-files src/*.cc)
 add_library(tuplib ${tuplib-files})
 target_include_directories(tuplib PUBLIC include)
-target_link_libraries(tuplib nigiri)
+target_link_libraries(tuplib nigiri rtree.c)
 
 # Executable
 file(GLOB_RECURSE tup-files exe/*.cc)

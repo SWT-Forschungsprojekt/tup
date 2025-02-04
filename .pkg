@@ -5,8 +5,12 @@
 [nigiri]
   url=git@github.com:motis-project/nigiri.git
   branch=master
-  commit=119e5de176d0ea41fef4939de612a498f242b238
+  commit=ad5f236e0180b00b44a25b4e873fe32a03ae5ea3
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=d858ae815258dfbdf4fb355f41a466f11758cb7c
+  commit=07fb33df7b79b73e84e0d2c69c6ee445221f6e32
+[rtree.c]
+  url=git@github.com:triptix-tech/rtree.c.git
+  branch=master
+  commit=6ed73a7dc4f1184f2b5b2acd8ac1c2b28a273057
