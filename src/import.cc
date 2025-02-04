@@ -72,6 +72,9 @@ struct task {
 
 }  // namespace tup
 
+template <>
+struct fmt::formatter<tup::task> : fmt::ostream_formatter {};
+
 namespace tup {
 
 cista::hash_t hash_file(fs::path const& p) {
