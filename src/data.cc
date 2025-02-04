@@ -9,6 +9,11 @@ namespace fs = std::filesystem;
 namespace n = nigiri;
 
 namespace tup {
+
+  data::~data() = default;
+  data::data(data&&) = default;
+  data& data::operator=(data&&) = default;
+
   void data::load_tt(fs::path const& p) {
     tags_ = tag_lookup::read(path_ / "tags.bin");
     tt_ = n::timetable::read(path_ / p);

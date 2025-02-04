@@ -34,18 +34,17 @@ int main(const int argc, char const* argv[]) {
     return 0;
   }
   std::cout << "Config file: " << opt.config_file << std::endl;
-  auto c = config{};
+  const auto c = config{};
   try {
-    auto data_path = fs::path{"data"};
+    const auto data_path = fs::path{"data"};
     auto config_path = fs::path{"config.yml"};
     auto desc = po::options_description{"Import Options"};
     auto const bars = utl::global_progress_bars{false};
-    import(c, std::move(data_path));
+    import(c, data_path);
     std::cout << "Successfully imported GTFS data";
     return 0;
   } catch (std::exception const&) {
     std::cout << "An error occurred";
     return 1;
   }
-  return 0;
 }
