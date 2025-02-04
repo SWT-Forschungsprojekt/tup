@@ -1,7 +1,5 @@
 #pragma once
 
-#include "tag_lookup.h"
-
 #include <memory>
 
 #include "cista/memory_holder.h"
@@ -46,14 +44,13 @@ struct data {
 
   auto cista_members() {
     // !!! Remember to add all new members !!!
-    return std::tie(tt_, tags_, location_rtee_, shapes_);
+    return std::tie(tt_, location_rtee_, shapes_);
   }
 
   std::filesystem::path path_;
   config config_;
 
   cista::wrapped<nigiri::timetable> tt_;
-  cista::wrapped<tag_lookup> tags_;
   ptr<point_rtree<nigiri::location_idx_t>> location_rtee_;
   ptr<nigiri::shapes_storage> shapes_;
 };

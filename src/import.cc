@@ -169,14 +169,12 @@ data import(config const& c, fs::path const& data_path, bool const write) {
             data_path, cista::mmap::protection::WRITE);
       }
 
-      d.tags_ = cista::wrapped{cista::raw::make_unique<tag_lookup>()};
       d.tt_ = cista::wrapped{cista::raw::make_unique<n::timetable>(nl::load(
           utl::to_vec(
               t.datasets_,
               [&, src = n::source_idx_t{}](auto&& x) mutable
               -> std::pair<std::string, nl::loader_config> {
                 auto const& [tag, dc] = x;
-                d.tags_->add(src++, tag);
                 return {dc.path_,
                         {
                             .link_stop_distance_ = t.link_stop_distance_,
@@ -196,7 +194,6 @@ data import(config const& c, fs::path const& data_path, bool const write) {
 
       if (write) {
         d.tt_->write(data_path / "tt.bin");
-        d.tags_->write(data_path / "tags.bin");
       }
 
       d.init_rtt();
