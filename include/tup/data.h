@@ -38,15 +38,8 @@ struct data {
 
   friend std::ostream& operator<<(std::ostream&, data const&);
 
-  void load_osr();
   void load_tt(std::filesystem::path const&);
   void load_shapes();
-  void load_railviz();
-  void load_geocoder();
-  void load_matches();
-  void load_reverse_geocoder();
-  void load_elevators();
-  void load_tiles();
 
   void init_rtt(date::sys_days = std::chrono::time_point_cast<date::days>(
                     std::chrono::system_clock::now()));

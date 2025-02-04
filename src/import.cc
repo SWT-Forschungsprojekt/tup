@@ -204,17 +204,11 @@ data import(config const& c, fs::path const& data_path, bool const write) {
       if (c.timetable_->with_shapes_) {
         d.load_shapes();
       }
-      if (c.timetable_->railviz_) {
-        d.load_railviz();
-      }
     },
     [&]() {
       d.load_tt("tt.bin");
       if (c.timetable_->with_shapes_) {
         d.load_shapes();
-      }
-      if (c.timetable_->railviz_) {
-        d.load_railviz();
       }
     },
     {tt_hash, n_version()}};

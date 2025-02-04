@@ -22,4 +22,11 @@ namespace tup {
         create_location_rtree(*tt_));
     init_rtt();
   }
+
+  void data::load_shapes() {
+      shapes_ = {};
+      shapes_ = std::make_unique<nigiri::shapes_storage>(
+          nigiri::shapes_storage{path_, cista::mmap::protection::READ});
+    }
+
 }// namespace tup
