@@ -1,4 +1,8 @@
 [conf]
   url=git@github.com:motis-project/conf.git
   branch=master
-  commit=f9bf4bd83bf55a2170725707e526cbacc45dcc66
+  commit=c4e741f40f91fde25dd8d0e49cb90fa4c2ea418d
+[nigiri]
+  url=git@github.com:motis-project/nigiri.git
+  branch=master
+  commit=119e5de176d0ea41fef4939de612a498f242b238
