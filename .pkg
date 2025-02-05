@@ -1,4 +1,24 @@
+[boost]
+  url=git@github.com:motis-project/boost.git
+  branch=master
+  commit=73549ebca677fe6214202a1ab580362b4f80e653
 [conf]
   url=git@github.com:motis-project/conf.git
   branch=master
   commit=f9bf4bd83bf55a2170725707e526cbacc45dcc66
+[fmt]
+  url=git@github.com:motis-project/fmt.git
+  branch=master
+  commit=edb385ac526c24bc917ec4a41bb0edb28f0ca59e
+[geo]
+  url=git@github.com:motis-project/geo.git
+  branch=master
+  commit=5d99aeb10674a41a82d7c78f850abfd9605bf6e1
+[utl]
+  url=git@github.com:motis-project/utl.git
+  branch=master
+  commit=538a11dec577de7238c7640491b3d4e091a33e08
+[net]
+  url=git@github.com:motis-project/net.git
+  branch=master
+  commit=75611343512242c64a5b3f50f3a660a17298339d
