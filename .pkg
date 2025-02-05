@@ -2,3 +2,7 @@
   url=git@github.com:motis-project/conf.git
   branch=master
   commit=f9bf4bd83bf55a2170725707e526cbacc45dcc66
+[nigiri]
+  url=git@github.com:motis-project/nigiri.git
+  branch=master
+  commit=a8c812f0fa468c81da35c08aaaeeb19bdc6f966c
