@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tup-${{ matrix.config.artifact }}
-          path: build/tup
+          path: build/tup-backend
 
   windows:
     runs-on: windows-latest
@@ -76,5 +76,5 @@ jobs:
       - name: Upload Windows Distribution
         uses: actions/upload-artifact@v4
         with:
-          name: tup-windows-${{ matrix.config.mode }}
-          path: build/tup.exe
+          name: tup-backend-windows-${{ matrix.config.mode }}
+          path: build/tup-backend.exe
