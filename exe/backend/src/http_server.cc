@@ -19,6 +19,8 @@
 
 #include "geo/latlng.h"
 
+#include "gtfsrt/gtfs-realtime.pb.h"
+
 using namespace net;
 using net::web_server;
 
@@ -64,7 +66,7 @@ struct http_server::impl {
       : ioc_{ios},
         thread_pool_{thread_pool},
         server_{ioc_} {
-
+    std::cout << "static file path: " << static_file_path << '\n';
   }
 
   void handle_request(web_server::http_req_t const& req,

@@ -22,3 +22,7 @@
   url=git@github.com:motis-project/net.git
   branch=master
   commit=75611343512242c64a5b3f50f3a660a17298339d
+[protobuf]
+  url=git@github.com:motis-project/protobuf.git
+  branch=master
+  commit=df2dd518c68b882c9dce5346393f8c388108e733
