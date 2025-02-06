@@ -1,17 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(tup)
 
-# Add include directories for dependencies
-include_directories(
-        ${CMAKE_SOURCE_DIR}/deps/boost
-        ${CMAKE_SOURCE_DIR}/deps/conf/include
-        ${CMAKE_SOURCE_DIR}/deps/fmt/include
-        ${CMAKE_SOURCE_DIR}/deps/utl/include
-        ${CMAKE_SOURCE_DIR}/deps/net/include
-        ${CMAKE_SOURCE_DIR}/deps/net/web_server/include
-        ${CMAKE_SOURCE_DIR}/deps/geo/include
-)
-
 ###############################################################################
 ## file globbing ##############################################################
 ###############################################################################
@@ -38,5 +27,3 @@ target_include_directories(tup-backend PRIVATE exe/backend/include)
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)
 
-# just for example add some compiler flags
-#target_compile_options(tup PUBLIC)
