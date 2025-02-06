@@ -21,9 +21,6 @@ jobs:
         config:
           - preset: linux-amd64
             artifact: linux-amd64
-          - preset: linux-arm64
-            artifact: linux-arm64
-            emulator: qemu-aarch64-static
 
     steps:
       - uses: actions/checkout@v4
