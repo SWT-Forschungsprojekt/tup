@@ -20,12 +20,9 @@ file(GLOB_RECURSE sources      exe/backend/*.cc)
 
 file(GLOB_RECURSE tup-backend-src exe/backend/*.cc)
 add_executable(tup-backend ${tup-backend-src})
-target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri)
+target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb)
 target_include_directories(tup-backend PRIVATE exe/backend/include)
 
 # include custom configuration from motis-project
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)
-
-# just for example add some compiler flags
-target_compile_options(tup PUBLIC)
