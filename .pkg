@@ -6,6 +6,10 @@
   url=git@github.com:motis-project/conf.git
   branch=master
   commit=c4e741f40f91fde25dd8d0e49cb90fa4c2ea418d
+[nigiri]
+  url=git@github.com:motis-project/nigiri.git
+  branch=master
+  commit=ad5f236e0180b00b44a25b4e873fe32a03ae5ea3
 [geo]
   url=git@github.com:motis-project/geo.git
   branch=master
@@ -18,3 +22,7 @@
   url=git@github.com:motis-project/net.git
   branch=master
   commit=75611343512242c64a5b3f50f3a660a17298339d
+[tbb]
+  url=git@github.com:motis-project/tbb.git
+  branch=master
+  commit=b3011be5060ec1be43c76d4a8cc80d5550adb31d
