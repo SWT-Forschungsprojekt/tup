@@ -16,8 +16,16 @@ file(GLOB_RECURSE sources      exe/backend/*.cc)
 ## target definitions #########################################################
 ###############################################################################
 
-# add the data to the target, so it becomes visible in some IDE
+# --- LIB ---
+file(GLOB_RECURSE tup-files src/*.cc)
+add_library(tup ${tup-files})
+target_include_directories(tup PUBLIC include)
+target_link_libraries(tup PUBLIC nigiri gtfsrt date utl)
+target_compile_features(tup PUBLIC cxx_std_23)
+target_compile_options(tup PRIVATE ${tup-compile-options})
 
+
+# add the data to the target, so it becomes visible in some IDE
 file(GLOB_RECURSE tup-backend-src exe/backend/*.cc)
 add_executable(tup-backend ${tup-backend-src})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb)
