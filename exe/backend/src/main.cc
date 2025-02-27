@@ -221,7 +221,7 @@ int main(int argc, char const* argv[]) {
     t = std::thread(run(pool));
   }
 
-  std::string url = "https://example.com/feed.protobuf"; // Ersetze mit der tatsächlichen URL
+  std::string url = "http://realtime.prod.obahart.org:8088/vehicle-positions";
   std::string protobuf_data;
 
   if (!DownloadProtobuf(url, protobuf_data)) {
