@@ -5,6 +5,12 @@
 #include "boost/algorithm/string.hpp"
 #include "boost/asio/post.hpp"
 #include "boost/json.hpp"
+#include <boost/beast/http.hpp>
+
+#ifdef NO_DATA
+#undef NO_DATA
+#endif
+#include "gtfsrt/gtfs-realtime.pb.h"
 
 #include "utl/pipes.h"
 #include "utl/to_vec.h"
@@ -73,10 +79,11 @@ struct http_server::impl {
         if (target.starts_with("/api/test")) {
           return cb(json_response(req, R"({"message": "Test"})",
                                   http::status::ok));
-        } else {
-          return cb(json_response(req, R"({"error": "Not found"})",
-                                  http::status::not_found));
+        } if (target.starts_with("/tripUpdates")) {
+          return handle_protobuf(req, cb);
         }
+        return cb(json_response(req, R"({"error": "Not found"})",
+                                http::status::not_found));
       }
       case http::verb::post:
       case http::verb::head: return handle_static(req, cb);
@@ -96,6 +103,29 @@ struct http_server::impl {
           namespace http = boost::beast::http;
           cb(net::web_server::string_res_t{http::status::not_found, req.version()});
         }
+  }
+
+  /// Create an empty realtime feed with minimal required header values
+  void handle_protobuf(web_server::http_req_t const& request,
+                     web_server::http_res_cb_t const& callback) {
+    namespace http = boost::beast::http;
+
+    transit_realtime::FeedMessage feed;
+    transit_realtime::FeedHeader* header = feed.mutable_header();
+
+    header->set_gtfs_realtime_version("2.0");
+    header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+    header->set_timestamp(time(nullptr));
+
+    std::string serialized_feed;
+    feed.SerializeToString(&serialized_feed);
+
+    http::response<http::string_body> res{http::status::ok, request.version()};
+    res.set(http::field::content_type, "application/x-protobuf");
+    res.body() = std::move(serialized_feed);
+    res.prepare_payload();
+
+    callback(std::move(res));
   }
 
   void listen(std::string const& host, std::string const& port) {
