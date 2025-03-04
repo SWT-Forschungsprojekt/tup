@@ -17,6 +17,13 @@
 
 #include "date/date.h"
 
+#include <string>
+#include <curl/curl.h>
+#ifdef NO_DATA
+#undef NO_DATA
+#endif
+#include "gtfsrt/gtfs-realtime.pb.h"
+
 #include "utl/progress_tracker.h"
 
 #include "nigiri/loader/load.h"
@@ -69,6 +76,27 @@ auto run(boost::asio::io_context& ioc) {
     }
   };
 }
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+  ((std::string*)userp)->append((char*)contents, size * nmemb);
+  return size * nmemb;
+}
+
+bool DownloadProtobuf(const std::string& url, std::string& out_data) {
+  CURL* curl;
+  CURLcode res;
+  curl = curl_easy_init();
+  if (!curl) return false;
+
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out_data);
+  res = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+
+  return (res == CURLE_OK);
+}
+
 int main(int argc, char const* argv[]) {
   std::cout << "Hello, World!" << std::endl;
   auto opt = settings{};
@@ -192,6 +220,22 @@ int main(int argc, char const* argv[]) {
   for (auto& t : threads) {
     t = std::thread(run(pool));
   }
+
+  std::string url = "http://realtime.prod.obahart.org:8088/vehicle-positions";
+  std::string protobuf_data;
+
+  if (!DownloadProtobuf(url, protobuf_data)) {
+    std::cerr << "Fehler beim Herunterladen der Protobuf-Datei" << std::endl;
+    return 1;
+  }
+
+  transit_realtime::FeedMessage feed;
+  if (!feed.ParseFromString(protobuf_data)) {
+    std::cerr << "Fehler beim Parsen der Protobuf-Daten" << std::endl;
+    return 1;
+  }
+
+  std::cout << "Success" << std::endl;
 
   server.listen(opt.http_host_, opt.http_port_);
 
