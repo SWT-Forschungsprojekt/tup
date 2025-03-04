@@ -10,7 +10,7 @@
 #ifdef NO_DATA
 #undef NO_DATA
 #endif
-#include "gtfsrt/gtfs-realtime.pb.h"
+#include "gtfs-rt/gtfs-realtime.pb.h"
 
 #include "utl/pipes.h"
 #include "utl/to_vec.h"
