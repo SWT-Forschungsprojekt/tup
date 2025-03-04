@@ -5,6 +5,9 @@
 /.clang-tidy
 /.vs
 /out
+/input
+*.zip
+*.bin
 
 # Prerequisites
 *.d
