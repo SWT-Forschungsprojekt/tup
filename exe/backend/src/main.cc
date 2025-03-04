@@ -86,6 +86,8 @@ int main(int argc, char const* argv[]) {
   unsigned threads_ = std::thread::hardware_concurrency();
   bool lock = true;
 
+  std::string vehicle_position_url;
+
   auto in = fs::path{};
   auto out = fs::path{"tt.bin"};
   auto out_shapes = fs::path{"shapes"};
@@ -110,7 +112,10 @@ int main(int argc, char const* argv[]) {
       ("threads,t", bpo::value(&threads_)->default_value(threads_), "Number of routing threads")  //
       ("lock,l", bpo::bool_switch(&lock)->default_value(lock), "Lock to memory")  //
 
-      ("in,i", bpo::value(&in), "input path")  //
+      // e.g. http://realtime.prod.obahart.org:8088/vehicle-positions
+      ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
+
+      ("in,i", bpo::value(&in)->required(), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
       ("ignore", bpo::bool_switch(&ignore)->default_value(false),
@@ -200,10 +205,9 @@ int main(int argc, char const* argv[]) {
     t = std::thread(run(pool));
   }
 
-  std::string url = "http://realtime.prod.obahart.org:8088/vehicle-positions";
   std::string protobuf_data;
 
-  if (!DownloadProtobuf(url, protobuf_data)) {
+  if (!DownloadProtobuf(vehicle_position_url, protobuf_data)) {
     std::cerr << "Fehler beim Herunterladen der Protobuf-Datei" << std::endl;
     return 1;
   }
