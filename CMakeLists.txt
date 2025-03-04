@@ -16,7 +16,7 @@ add_custom_command(
 
 add_library(gtfs-rt ${CMAKE_CURRENT_BINARY_DIR}/generated/gtfs-rt/gtfs-realtime.pb.cc)
 target_compile_features(gtfs-rt PUBLIC cxx_std_23)
-target_include_directories(gtfs-rt SYSTEM PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/generated)
+target_include_directories(gtfs-rt SYSTEM PUBLIC build/generated)
 target_link_libraries(gtfs-rt protobuf::libprotobuf)
 
 ###############################################################################
