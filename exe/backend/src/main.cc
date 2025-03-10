@@ -14,7 +14,7 @@
 #include "boost/program_options.hpp"
 
 #include "date/date.h"
-#include "tup/feed_updater.h"
+#include "feed_updater.h"
 
 #include <string>
 #include <curl/curl.h>

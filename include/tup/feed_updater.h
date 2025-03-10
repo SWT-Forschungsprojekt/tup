@@ -1,6 +1,10 @@
+#pragma once
+#include <atomic>
 #include <string>
 #include <thread>
-#include <atomic>
+#ifdef NO_DATA
+#undef NO_DATA
+#endif
 #include "gtfs-rt/gtfs-realtime.pb.h"
 
 class FeedUpdater {
@@ -19,5 +23,3 @@ private:
   std::thread worker_;
   std::atomic<bool> running_{true};
 };
-
-#endif // FEED_UPDATER_H
