@@ -19,16 +19,6 @@ target_compile_features(gtfs-rt PUBLIC cxx_std_23)
 target_include_directories(gtfs-rt SYSTEM PUBLIC build/generated)
 target_link_libraries(gtfs-rt protobuf::libprotobuf)
 
-###############################################################################
-## file globbing ##############################################################
-###############################################################################
-
-# these instructions search the directory tree when CMake is
-# invoked and put all files that match the pattern in the variables
-# `sources` and `data`
-file(GLOB_RECURSE sources      exe/backend/*.cc)
-# you can use set(sources src/main.cpp) etc if you don't want to
-# use globbing to find files automatically
 
 ###############################################################################
 ## target definitions #########################################################
@@ -36,10 +26,10 @@ file(GLOB_RECURSE sources      exe/backend/*.cc)
 
 # add the data to the target, so it becomes visible in some IDE
 
-file(GLOB_RECURSE tup-backend-src exe/backend/*.cc)
+file(GLOB_RECURSE tup-backend-src exe/backend/*.cc src/*.cc include/tup/*.h)
 add_executable(tup-backend ${tup-backend-src})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb curl gtfs-rt)
-target_include_directories(tup-backend PRIVATE exe/backend/include)
+target_include_directories(tup-backend PRIVATE exe/backend/include include/tup)
 
 # include custom configuration from motis-project
 include(cmake/buildcache.cmake)

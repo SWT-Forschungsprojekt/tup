@@ -14,6 +14,7 @@
 #include "boost/program_options.hpp"
 
 #include "date/date.h"
+#include "tup/feed_updater.h"
 
 #include <string>
 #include <curl/curl.h>
@@ -112,7 +113,6 @@ int main(int argc, char const* argv[]) {
       ("threads,t", bpo::value(&threads_)->default_value(threads_), "Number of routing threads")  //
       ("lock,l", bpo::bool_switch(&lock)->default_value(lock), "Lock to memory")  //
 
-      // e.g. http://realtime.prod.obahart.org:8088/vehicle-positions
       ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
 
       ("in,i", bpo::value(&in)->required(), "input path")  //
@@ -222,7 +222,13 @@ int main(int argc, char const* argv[]) {
 
   server.listen(http_host, http_port);
 
+  // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
+  FeedUpdater feedUpdater(feed, vehicle_position_url);
+  feedUpdater.start();
+
+
   auto const stop = net::stop_handler(ioc, [&]() {
+    feedUpdater.stop();
     server.stop();
     ioc.stop();
   });
@@ -232,4 +238,5 @@ int main(int argc, char const* argv[]) {
   for (auto& t : threads) {
     t.join();
   }
+  feedUpdater.stop();
 }
