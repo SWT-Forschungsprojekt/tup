@@ -10,18 +10,23 @@
 - Git
 
 ### Building
+
 ```shell
 cmake . -G Ninja -B build
 ninja -C build
 ```
 
 ### Running
+
 The tool needs a GTFS feed
+
 ```shell
-wget https://gtfs.tpbi.ro/regional/BUCHAREST-REGION.zip
+wget -O BUCHAREST-REGION.zip https://gtfs.tpbi.ro/regional/BUCHAREST-REGION.zip
 unzip BUCHAREST-REGION.zip -d input
 ```
+
 Then it can be run as following:
+
 ```shell
 ./build/tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
 ```
