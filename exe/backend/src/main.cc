@@ -6,8 +6,6 @@
 
 #include "net/stop_handler.h"
 
-#include "conf/options_parser.h"
-
 #include "tup/backend/http_server.h"
 
 #include <vector>
@@ -16,6 +14,13 @@
 #include "boost/program_options.hpp"
 
 #include "date/date.h"
+
+#include <string>
+#include <curl/curl.h>
+#ifdef NO_DATA
+#undef NO_DATA
+#endif
+#include "gtfs-rt/gtfs-realtime.pb.h"
 
 #include "utl/progress_tracker.h"
 
@@ -32,29 +37,6 @@ using namespace std::string_literals;
 
 using namespace tup::backend;
 
-class settings : public conf::configuration {
-public:
-  explicit settings() : configuration("Options") {
-    param(config_file, "config,c", "Config file path");
-
-    param(data_dir_, "data,d", "Data directory");
-    param(http_host_, "host,h", "HTTP host");
-    param(http_port_, "port,p", "HTTP port");
-    param(static_file_path_, "static,s", "Path to static files (ui/web)");
-    param(threads_, "threads,t", "Number of routing threads");
-    param(lock_, "lock,l", "Lock to memory");
-  }
-
-  fs::path config_file{"config.yaml"};
-
-  fs::path data_dir_{"tup"};
-  std::string http_host_{"0.0.0.0"};
-  std::string http_port_{"8000"};
-  std::string static_file_path_;
-  bool lock_{true};
-  unsigned threads_{std::thread::hardware_concurrency()};
-};
-
 auto run(boost::asio::io_context& ioc) {
   return [&ioc]() {
     while (true) {
@@ -69,22 +51,42 @@ auto run(boost::asio::io_context& ioc) {
     }
   };
 }
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+  ((std::string*)userp)->append((char*)contents, size * nmemb);
+  return size * nmemb;
+}
+
+bool DownloadProtobuf(const std::string& url, std::string& out_data) {
+  CURL* curl;
+  CURLcode res;
+  curl = curl_easy_init();
+  if (!curl) return false;
+
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out_data);
+  res = curl_easy_perform(curl);
+  curl_easy_cleanup(curl);
+
+  return (res == CURLE_OK);
+}
+
 int main(int argc, char const* argv[]) {
   std::cout << "Hello, World!" << std::endl;
-  auto opt = settings{};
-  auto parser = conf::options_parser({&opt});
-  parser.read_command_line_args(argc, argv);
 
-  if (parser.help()) {
-    parser.print_help(std::cout);
-    return 0;
-  } else if (parser.version()) {
-    std::cout << parser.version() << std::endl;
-    return 0;
-  }
-  std::cout << "Config file: " << opt.config_file << std::endl;
   auto const progress_tracker = utl::activate_progress_tracker("importer");
   auto const silencer = utl::global_progress_bars{true};
+
+  auto config_file = fs::path{"config.yaml"};
+  auto data_dir = fs::path{"tup"};
+  auto http_host = "0.0.0.0"s;
+  auto http_port = "8000"s;
+  auto static_file_path = fs::path{};
+  unsigned threads_ = std::thread::hardware_concurrency();
+  bool lock = true;
+
+  std::string vehicle_position_url;
 
   auto in = fs::path{};
   auto out = fs::path{"tt.bin"};
@@ -101,7 +103,19 @@ int main(int argc, char const* argv[]) {
   auto desc = bpo::options_description{"Options"};
   desc.add_options()  //
       ("help,h", "produce this help message")  //
-      ("in,i", bpo::value(&in), "input path")  //
+
+      ("config,c", bpo::value(&config_file)->default_value(config_file), "config file path")  //
+      ("data,d", bpo::value(&data_dir)->default_value(data_dir), "data directory")  //
+      ("host", bpo::value(&http_host)->default_value(http_host), "HTTP host")  //
+      ("port,p", bpo::value(&http_port)->default_value(http_port), "HTTP port")  //
+      ("static", bpo::value(&static_file_path)->default_value(static_file_path), "Path to static files (ui/web)")  //
+      ("threads,t", bpo::value(&threads_)->default_value(threads_), "Number of routing threads")  //
+      ("lock,l", bpo::bool_switch(&lock)->default_value(lock), "Lock to memory")  //
+
+      // e.g. http://realtime.prod.obahart.org:8088/vehicle-positions
+      ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
+
+      ("in,i", bpo::value(&in)->required(), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
       ("ignore", bpo::bool_switch(&ignore)->default_value(false),
@@ -111,7 +125,7 @@ int main(int argc, char const* argv[]) {
        "start date of the timetable, format: YYYY-MM-DD")  //
       ("num_days,n", bpo::value(&n_days)->default_value(n_days),
        "the length of the timetable in days")  //
-      ("tz,t", bpo::value(&c.default_tz_)->default_value(c.default_tz_),
+      ("tz", bpo::value(&c.default_tz_)->default_value(c.default_tz_),
        "the default timezone")  //
       ("link_stop_distance",
        bpo::value(&c.link_stop_distance_)->default_value(c.link_stop_distance_),
@@ -183,17 +197,30 @@ int main(int argc, char const* argv[]) {
 
   auto ioc = boost::asio::io_context{};
   auto pool = boost::asio::io_context{};
-  auto server = http_server{ioc, pool, opt.static_file_path_};
-
-  server.listen(opt.http_host_, opt.http_port_);
+  auto server = http_server{ioc, pool, static_file_path};
 
   auto work_guard = boost::asio::make_work_guard(pool);
-  auto threads = std::vector<std::thread>(std::max(1U, opt.threads_));
+  auto threads = std::vector<std::thread>(std::max(1U, threads_));
   for (auto& t : threads) {
     t = std::thread(run(pool));
   }
 
-  server.listen(opt.http_host_, opt.http_port_);
+  std::string protobuf_data;
+
+  if (!DownloadProtobuf(vehicle_position_url, protobuf_data)) {
+    std::cerr << "Fehler beim Herunterladen der Protobuf-Datei" << std::endl;
+    return 1;
+  }
+
+  transit_realtime::FeedMessage feed;
+  if (!feed.ParseFromString(protobuf_data)) {
+    std::cerr << "Fehler beim Parsen der Protobuf-Daten" << std::endl;
+    return 1;
+  }
+
+  std::cout << "Success" << std::endl;
+
+  server.listen(http_host, http_port);
 
   auto const stop = net::stop_handler(ioc, [&]() {
     server.stop();
