@@ -2,7 +2,7 @@
 
 ## How to build
 
-### Requirements:
+### Requirements
 
 - A recent C++ compiler: Either [Clang](https://llvm.org/) 18 or GCC 13
 - CMake 3.17 (or newer): [cmake.org](https://cmake.org/download/) ([Ubuntu APT Repository](https://apt.kitware.com/))
@@ -10,8 +10,28 @@
 - Git
 
 ### Building
+
 ```shell
-mkdir build && cd build
-cmake .. -G Ninja
-ninja
+cmake . -G Ninja -B build
+ninja -C build
+```
+
+### Running
+
+### Requirements:
+
+- wget
+- unzip
+
+The tool needs a GTFS feed
+
+```shell
+wget -O BUCHAREST-REGION.zip https://gtfs.tpbi.ro/regional/BUCHAREST-REGION.zip
+unzip BUCHAREST-REGION.zip -d input
+```
+
+Then it can be run as following:
+
+```shell
+./build/tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
 ```
