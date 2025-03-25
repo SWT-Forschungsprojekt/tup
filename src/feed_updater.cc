@@ -9,9 +9,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
-FeedUpdater::FeedUpdater(transit_realtime::FeedMessage& feed, const std::string& url)
-    : feed_(feed), url_(url) {}
-
 FeedUpdater::~FeedUpdater() {
   stop();
 }
@@ -25,6 +22,10 @@ void FeedUpdater::stop() {
   if (worker_.joinable()) {
     worker_.join();
   }
+}
+
+transit_realtime::FeedMessage& FeedUpdater::getFeed() {
+  return feed_;
 }
 
 void FeedUpdater::run() {
@@ -52,6 +53,6 @@ bool FeedUpdater::downloadFeed() {
   transit_realtime::FeedMessage new_feed;
   if (!new_feed.ParseFromString(protobuf_data)) return false;
 
-  feed_ = std::move(new_feed);  // Aktualisiere den Feed
+  feed_ = predictionMethod_(new_feed);  // Aktualisiere den Feed
   return true;
 }
