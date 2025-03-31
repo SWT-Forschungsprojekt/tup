@@ -30,7 +30,6 @@ file(GLOB_RECURSE sources      exe/backend/*.cc)
 # you can use set(sources src/main.cpp) etc if you don't want to
 # use globbing to find files automatically
 
-
 ###############################################################################
 ## target definitions #########################################################
 ###############################################################################
