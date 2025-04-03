@@ -5,6 +5,8 @@
 #include "fmt/std.h"
 
 #include "net/stop_handler.h"
+#include "net/ssl.h"
+#include "net/http/client/https_client.h"
 
 #include "tup/backend/http_server.h"
 
@@ -16,7 +18,6 @@
 #include "date/date.h"
 
 #include <string>
-#include <curl/curl.h>
 #ifdef NO_DATA
 #undef NO_DATA
 #endif
@@ -29,6 +30,7 @@
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
 
+using namespace net::http::client;
 namespace fs = std::filesystem;
 namespace bpo = boost::program_options;
 using namespace nigiri;
@@ -58,18 +60,26 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 }
 
 bool DownloadProtobuf(const std::string& url, std::string& out_data) {
-  CURL* curl;
-  CURLcode res;
-  curl = curl_easy_init();
-  if (!curl) return false;
+  // Boost Asio IO Service object
+  // Represents an 'event loop' for asynchronous Input/Output operations
+  // (such as networking or timers)
+  boost::asio::io_service ios;
+  request request{url,request::method::GET};
 
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out_data);
-  res = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+  make_https(ios, request.address)
+      ->query(request, [&out_data](std::shared_ptr<net::ssl> const&, response const& res,
+                      boost::system::error_code ec) {
+        if (ec) {
+          std::cout << "error: " << ec.message() << "\n";
+        } else {
+            out_data = res.body;
+        }
+      });
 
-  return (res == CURLE_OK);
+  // Start asynchronous event loop.
+  // This is required in order to start the request!
+  ios.run();
+  return true;
 }
 
 int main(int argc, char const* argv[]) {
