@@ -58,6 +58,20 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
+transit_realtime::FeedMessage dummy_predictor(
+    const transit_realtime::FeedMessage& input_feed) {
+  transit_realtime::FeedMessage feed;
+  transit_realtime::FeedHeader* header = feed.mutable_header();
+
+  header->set_gtfs_realtime_version("2.0");
+  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+  header->set_timestamp(time(nullptr));
+
+  std::string serialized_feed;
+  feed.SerializeToString(&serialized_feed);
+  return feed;
+}
+
 bool DownloadProtobuf(const std::string& url, std::string& out_data) {
   CURL* curl;
   CURLcode res;
@@ -223,7 +237,7 @@ int main(int argc, char const* argv[]) {
   server.listen(http_host, http_port);
 
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
-  FeedUpdater feedUpdater(feed, vehicle_position_url);
+  FeedUpdater feedUpdater(feed, vehicle_position_url, dummy_predictor);
   feedUpdater.start();
 
 
