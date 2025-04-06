@@ -6,7 +6,8 @@
 
 #include "net/stop_handler.h"
 
-#include "tup/backend/http_server.h"
+#include "http_server.h"
+#include "feed_updater.h"
 
 #include <vector>
 
@@ -14,7 +15,6 @@
 #include "boost/program_options.hpp"
 
 #include "date/date.h"
-#include "feed_updater.h"
 
 #include <string>
 #include <curl/curl.h>
