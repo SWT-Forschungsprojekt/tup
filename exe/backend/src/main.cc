@@ -56,7 +56,7 @@ auto run(boost::asio::io_context& ioc) {
 }
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-  ((std::string*)userp)->append((char*)contents, size * nmemb);
+  static_cast<std::string*>(userp)->append(static_cast<char*>(contents), size * nmemb);
   return size * nmemb;
 }
 
@@ -83,7 +83,7 @@ bool DownloadProtobuf(const std::string& url, std::string& out_data) {
 
   make_https(ios, request.address)
       ->query(request, [&out_data](std::shared_ptr<net::ssl> const&, response const& res,
-                      boost::system::error_code ec) {
+                          const boost::system::error_code& ec) {
         if (ec) {
           std::cout << "error: " << ec.message() << "\n";
         } else {
@@ -178,7 +178,7 @@ int main(int argc, char const* argv[]) {
       bpo::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   bpo::notify(vm);
 
-  if (vm.count("help") != 0U) {
+  if (vm.contains("help")) {
     std::cout << desc << "\n";
     return 0;
   }
@@ -230,11 +230,6 @@ int main(int argc, char const* argv[]) {
   }
 
   std::string protobuf_data;
-
-  if (!DownloadProtobuf(vehicle_position_url, protobuf_data)) {
-    std::cerr << "Fehler beim Herunterladen der Protobuf-Datei" << std::endl;
-    return 1;
-  }
 
   transit_realtime::FeedMessage feed;
   if (!feed.ParseFromString(protobuf_data)) {
