@@ -74,7 +74,7 @@ transit_realtime::FeedMessage dummy_predictor(
   return feed;
 }
 
-bool DownloadProtobuf(const std::string& url, std::string& out_data) {
+void DownloadProtobuf(const std::string& url, std::string& out_data) {
   // Boost Asio IO Service object
   // Represents an 'event loop' for asynchronous Input/Output operations
   // (such as networking or timers)
@@ -94,7 +94,6 @@ bool DownloadProtobuf(const std::string& url, std::string& out_data) {
   // Start asynchronous event loop.
   // This is required in order to start the request!
   ios.run();
-  return true;
 }
 
 int main(int argc, char const* argv[]) {
@@ -230,6 +229,8 @@ int main(int argc, char const* argv[]) {
   }
 
   std::string protobuf_data;
+
+  DownloadProtobuf(vehicle_position_url, protobuf_data);
 
   transit_realtime::FeedMessage feed;
   if (!feed.ParseFromString(protobuf_data)) {
