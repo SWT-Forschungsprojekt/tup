@@ -34,11 +34,10 @@ file(GLOB_RECURSE sources exe/backend/src/*.cc)
 ## target definitions #########################################################
 ###############################################################################
 
-# add the data to the target, so it becomes visible in some
+# add the data to the target, so it becomes visible in some IDE
 
 file(GLOB_RECURSE predictors src/predictors/*.cc include/predictors/*.h)
 file(GLOB_RECURSE tup-backend-src exe/backend/src/*.cc exe/backend/include/*.h)
-
 add_executable(tup-backend ${tup-backend-src} ${predictors})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb gtfs-rt http-client)
 target_include_directories(tup-backend PRIVATE exe/backend/include include)
