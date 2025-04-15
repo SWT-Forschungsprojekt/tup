@@ -14,7 +14,7 @@
 
 class FeedUpdater {
 public:
-  using PredictionMethod = std::function<transit_realtime::FeedMessage(const transit_realtime::FeedMessage&)>;
+  using PredictionMethod = std::function<void(transit_realtime::FeedMessage&)>;
 
   FeedUpdater(transit_realtime::FeedMessage& feed, const std::string& url, PredictionMethod predictionMethod)
       : feed_(feed), url_(url), predictionMethod_(std::move(predictionMethod)) {}
