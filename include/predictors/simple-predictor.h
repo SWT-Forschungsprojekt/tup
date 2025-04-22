@@ -9,10 +9,9 @@ class SimplePredictor {
         
         // Method to predict the next stop and arrival time
         void predict(transit_realtime::FeedMessage& message);
+        std::chrono::milliseconds delay_;
 
     private:
         int64_t getDelay();
-
-        std::chrono::milliseconds delay_;
         bool random_;
 };
