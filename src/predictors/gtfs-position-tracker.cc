@@ -3,6 +3,7 @@
 
 GTFSPositionTracker::GTFSPositionTracker() = default;
 
+std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable timetable, const std::string& string);
 void GTFSPositionTracker::predict(
     transit_realtime::FeedMessage& message,
     const transit_realtime::FeedMessage& vehiclePositions,
@@ -14,9 +15,49 @@ void GTFSPositionTracker::predict(
         // Get Trip ID
         std::string tripID = vehicle_position->trip().trip_id();
         // Get a stop list for a given trip
+        std::vector<nigiri::location> stop_list = get_stops_for_trip(timetable, tripID);
         // check for each stop if we are close
         // if we are close, check if a corresponding tripUpdate exists
         // if not, create a new one
         // if yes, update it accordingly
       }
     }};
+
+std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, 
+                                                std::string const& trip_id_str) {
+    // Trip-ID aus String erstellen
+    auto const trip_id = nigiri::trip_id{trip_id_str};
+    
+    // Trip-ID in internen Index umwandeln
+    auto const trip_id_pair = std::ranges::find_if(tt.trip_id_to_idx_,
+        [&](auto const& pair) {
+            return tt.trip_id_strings_[pair.first] == trip_id;
+        });
+    
+    if (trip_id_pair == tt.trip_id_to_idx_.end()) {
+        throw std::runtime_error("Trip ID nicht gefunden: " + trip_id_str);
+    }
+    
+    auto const trip_idx = trip_id_pair->second;
+    
+    // Route für den Trip finden
+    auto const& transports = tt.trip_transport_ranges_[trip_idx];
+    if (transports.empty()) {
+        throw std::runtime_error("Keine Transporte für diesen Trip gefunden");
+    }
+    
+    // Ersten Transport nehmen und dessen Route
+    auto const first_transport = transports[0];
+    auto const route_idx = tt.transport_route_.at(first_transport.first); // Änderung hier: .first für transport_idx
+    
+    // Stops aus der Route-Sequenz holen
+    std::vector<nigiri::location> stops;
+    auto const& stop_sequence = tt.route_location_seq_[route_idx];
+    
+    // Jeden Stop in ein location-Objekt umwandeln
+    for (auto const stop_idx : stop_sequence) {
+        stops.push_back(tt.locations_.get(nigiri::location_idx_t(stop_idx)));
+    }
+    
+    return stops;
+}
