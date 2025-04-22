@@ -12,6 +12,7 @@ void GTFSPositionTracker::predict(
       if (entity->has_vehicle()) {
         transit_realtime::VehiclePosition* vehicle_position = entity->mutable_vehicle();
         // Get Trip ID
+        std::string tripID = vehicle_position->trip().trip_id();
         // Get a stop list for a given trip
         // check for each stop if we are close
         // if we are close, check if a corresponding tripUpdate exists
