@@ -1,4 +1,6 @@
 #pragma once
+#include <nigiri/timetable.h>
+
 #include "gtfs-rt/gtfs-realtime.pb.h"
 
 class GTFSPositionTracker {
@@ -6,5 +8,7 @@ class GTFSPositionTracker {
     GTFSPositionTracker();
 
   // Method to predict the next stop and arrival time
-  void predict(transit_realtime::FeedMessage& message, transit_realtime::FeedMessage& vehiclePositions);
+  static void predict(transit_realtime::FeedMessage& message,
+                 const transit_realtime::FeedMessage& vehiclePositions,
+                 const nigiri::timetable& timetable);
 };
