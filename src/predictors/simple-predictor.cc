@@ -1,6 +1,5 @@
 #include "predictors/simple-predictor.h"
 #include <random>
-#include <cstdint>
 
 
 SimplePredictor::SimplePredictor(std::chrono::milliseconds delay, bool random) {
@@ -15,7 +14,7 @@ SimplePredictor::SimplePredictor(std::chrono::milliseconds delay, bool random) {
 int64_t SimplePredictor::getDelay() {
   if (random_) {
     static std::mt19937_64 rng(std::random_device{}());  // 64-bit engine
-    std::uniform_int_distribution<int64_t> dist(0, 300000);  // 0 to 300000 miliseconds (5 minutes)
+    std::uniform_int_distribution<int64_t> dist(0, 300000);  // 0 to 300,000 milliseconds (5 minutes)
     return dist(rng);
   } else {
     // Fixed delay logic
@@ -24,7 +23,7 @@ int64_t SimplePredictor::getDelay() {
 };
 
 void SimplePredictor::predict(transit_realtime::FeedMessage& message) {
-  int64_t delay = getDelay();
+  const int64_t delay = getDelay();
 
   for (int i = 0; i < message.entity_size(); ++i) {
     transit_realtime::FeedEntity* entity = message.mutable_entity(i);
