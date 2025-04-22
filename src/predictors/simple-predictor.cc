@@ -57,4 +57,12 @@ void SimplePredictor::predict(transit_realtime::FeedMessage& message) {
       }
     }
   }
+
+  // Set modified time
+  transit_realtime::FeedHeader* header = message.mutable_header();
+  header->set_timestamp(time(nullptr));
+  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+  header->set_gtfs_realtime_version("2.0");
+
+  
 };

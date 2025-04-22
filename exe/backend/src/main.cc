@@ -8,6 +8,7 @@
 
 #include "http_server.h"
 #include "feed_updater.h"
+#include "predictors/simple-predictor.h"
 
 #include <vector>
 
@@ -58,6 +59,11 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
+/*
+* Dummy predictor function that does nothing.
+* This is just a placeholder for the actual prediction logic.
+*/
+/*
 transit_realtime::FeedMessage dummy_predictor(
     const transit_realtime::FeedMessage& input_feed) {
   transit_realtime::FeedMessage feed;
@@ -71,6 +77,7 @@ transit_realtime::FeedMessage dummy_predictor(
   feed.SerializeToString(&serialized_feed);
   return feed;
 }
+*/
 
 bool DownloadProtobuf(const std::string& url, std::string& out_data) {
   CURL* curl;
@@ -236,8 +243,19 @@ int main(int argc, char const* argv[]) {
 
   server.listen(http_host, http_port);
 
+  //Initialize the predictor
+  SimplePredictor dummy_predictor{
+    std::chrono::milliseconds{300000}, // 1000 * 60 * 5 Should be 5 minutes
+    false
+  };
+
+  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& msg) {
+    dummy_predictor.predict(msg);
+  };
+
+
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
-  FeedUpdater feedUpdater(feed, vehicle_position_url, dummy_predictor);
+  FeedUpdater feedUpdater(feed, vehicle_position_url, method);
   feedUpdater.start();
 
 
