@@ -34,11 +34,11 @@ void GTFSPositionTracker::predict(
           bg::set<1>(vehicle_point, vehicle_position->position().latitude());
           bg::set<0>(location_point, location.pos_.lng_());
           bg::set<1>(location_point, location.pos_.lat_());
-          transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
           const auto distance = bg::distance(
               vehicle_point, location_point,
               bg::strategy::distance::haversine(6371000.0));
           if (distance < 100) {
+            transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
             bool tripUpdateExists = false;
             for (const auto& tripUpdate : message.entity()) {
               if (tripUpdate.has_trip_update() &&
@@ -53,23 +53,16 @@ void GTFSPositionTracker::predict(
                 }
               }
             }
-            if (tripUpdateExists) {
-
-              auto now = std::chrono::system_clock::now();
-              auto current_time =
+            auto now = std::chrono::system_clock::now();
+            auto current_time =
                   std::chrono::duration_cast<std::chrono::seconds>(
                       now.time_since_epoch())
                       .count();
+            if (tripUpdateExists) {
               stopTimeUpdate.mutable_departure()->set_time(
                   std::max(current_time, stopTimeUpdate.departure().time()));
             }
             else {
-              auto now = std::chrono::system_clock::now();
-              auto current_time =
-                  std::chrono::duration_cast<std::chrono::seconds>(
-                      now.time_since_epoch())
-                      .count();
-
               transit_realtime::FeedEntity* new_entity = message.add_entity();
               new_entity->set_id(tripID);
 
