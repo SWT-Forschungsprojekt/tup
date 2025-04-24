@@ -29,9 +29,9 @@ void GTFSPositionTracker::predict(
 
           namespace bg = boost::geometry;
           bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
-              vehicle_point;
+              vehicle_point{};
           bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
-              location_point;
+              location_point{};
 
           bg::set<0>(vehicle_point, vehicle_position->position().longitude());
           bg::set<1>(vehicle_point, vehicle_position->position().latitude());
