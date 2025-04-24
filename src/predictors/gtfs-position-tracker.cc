@@ -88,9 +88,15 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt,
                                                 std::string const& trip_id_str) {
     std::cerr << "Suche Trip-ID: " << trip_id_str << std::endl;
     
-    auto const trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
-    std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
+    nigiri::trip_idx_t trip_idx;
+    try {
+        trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Fehler: " << e.what() << std::endl;
+        return std::vector<nigiri::location>();
+    }
     
+    std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
     std::cerr << "Anzahl der Transporte: " << tt.trip_transport_ranges_.size() << std::endl;
     
     if (trip_idx >= tt.trip_transport_ranges_.size()) {
