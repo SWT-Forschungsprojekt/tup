@@ -32,6 +32,8 @@
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
 
+#include "../../../include/predictors/gtfs-position-tracker.h"
+
 using namespace net::http::client;
 namespace fs = std::filesystem;
 namespace bpo = boost::program_options;
@@ -245,15 +247,10 @@ int main(int argc, char const* argv[]) {
   }
 
   std::cout << "Success" << std::endl;
-
-  //Initialize the predictor
-  SimplePredictor dummy_predictor{
-    std::chrono::milliseconds{300000}, // 1000 * 60 * 5 Should be 5 minutes
-    false
-  };
-
-  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& msg) {
-    dummy_predictor.predict(msg);
+  transit_realtime::FeedMessage tripUpdatesFeed;
+  timetable* timetable = timetable::read(out).get();
+  FeedUpdater::PredictionMethod method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
+    GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, *timetable);
   };
 
 
