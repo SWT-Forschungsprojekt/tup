@@ -218,7 +218,6 @@ int main(int argc, char const* argv[]) {
 
   auto ioc = boost::asio::io_context{};
   auto pool = boost::asio::io_context{};
-  auto server = http_server{ioc, pool, static_file_path};
 
   auto work_guard = boost::asio::make_work_guard(pool);
   auto threads = std::vector<std::thread>(std::max(1U, threads_));
@@ -241,8 +240,6 @@ int main(int argc, char const* argv[]) {
 
   std::cout << "Success" << std::endl;
 
-  server.listen(http_host, http_port);
-
   //Initialize the predictor
   SimplePredictor dummy_predictor{
     std::chrono::milliseconds{300000}, // 1000 * 60 * 5 Should be 5 minutes
@@ -257,7 +254,10 @@ int main(int argc, char const* argv[]) {
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
   FeedUpdater feedUpdater(feed, vehicle_position_url, method);
   feedUpdater.start();
+  
+  auto server = http_server{ioc, pool, static_file_path, feedUpdater.getFeed()};
 
+  server.listen(http_host, http_port);
 
   auto const stop = net::stop_handler(ioc, [&]() {
     feedUpdater.stop();
