@@ -14,10 +14,10 @@ auto convert_trip_id_to_idx(nigiri::timetable const& tt, std::string const& trip
 
 void GTFSPositionTracker::predict(
     transit_realtime::FeedMessage& message,
-    const transit_realtime::FeedMessage& vehiclePositions,
+    transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
     for (int i = 0; i < vehiclePositions.entity_size(); i++) {
-      transit_realtime::FeedEntity* entity = message.mutable_entity(i);
+      transit_realtime::FeedEntity* entity = vehiclePositions.mutable_entity(i);
       if (entity->has_vehicle()) {
         transit_realtime::VehiclePosition* vehicle_position = entity->mutable_vehicle();
         // Get Trip ID

@@ -223,9 +223,9 @@ int main(int argc, char const* argv[]) {
   }
 
   auto const start = parse_date(start_date);
-  load(input_files, finalize_opt, {start, start + date::days{n_days}},
-       assistance.get(), shapes.get(), ignore && recursive)
-      .write(out);
+  auto timetable = load(input_files, finalize_opt, {start, start + date::days{n_days}},
+       assistance.get(), shapes.get(), ignore && recursive);
+
 
   auto ioc = boost::asio::io_context{};
   auto pool = boost::asio::io_context{};
@@ -247,10 +247,9 @@ int main(int argc, char const* argv[]) {
   }
 
   std::cout << "Success" << std::endl;
-  transit_realtime::FeedMessage tripUpdatesFeed;
-  timetable* timetable = timetable::read(out).get();
-  FeedUpdater::PredictionMethod method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
-    GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, *timetable);
+  auto tripUpdatesFeed = transit_realtime::FeedMessage{};
+  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+    GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
   };
 
 
