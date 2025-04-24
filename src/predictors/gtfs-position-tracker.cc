@@ -64,7 +64,23 @@ void GTFSPositionTracker::predict(
                   std::max(current_time, stopTimeUpdate.departure().time()));
             }
             else {
-              createTripUpdate(message, tripID, location);
+              auto now = std::chrono::system_clock::now();
+              auto current_time =
+                  std::chrono::duration_cast<std::chrono::seconds>(
+                      now.time_since_epoch())
+                      .count();
+
+              transit_realtime::FeedEntity* new_entity = message.add_entity();
+              new_entity->set_id(tripID);
+
+              transit_realtime::TripUpdate* trip_update =
+                  new_entity->mutable_trip_update();
+              trip_update->mutable_trip()->set_trip_id(tripID);
+
+              transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update =
+                  trip_update->add_stop_time_update();
+              stop_time_update->set_stop_id(location.id_);
+              stop_time_update->mutable_departure()->set_time(current_time);
             }
 
           }
