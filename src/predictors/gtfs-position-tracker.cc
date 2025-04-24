@@ -86,17 +86,31 @@ void GTFSPositionTracker::predict(
 
 std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, 
                                                 std::string const& trip_id_str) {
-    // Trip-ID in internen Index umwandeln
-    auto const trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
+    std::cerr << "Suche Trip-ID: " << trip_id_str << std::endl;
     
-    // Route für den Trip finden
-    auto const& transports = tt.trip_transport_ranges_[trip_idx];
-    if (transports.empty()) {
-        throw std::runtime_error("Keine Transporte für diesen Trip gefunden");
+    auto const trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
+    std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
+    
+    std::cerr << "Anzahl der Transporte: " << tt.trip_transport_ranges_.size() << std::endl;
+    
+    if (trip_idx >= tt.trip_transport_ranges_.size()) {
+        throw std::runtime_error("Trip-Index außerhalb des gültigen Bereichs");
     }
     
+    auto const& transports = tt.trip_transport_ranges_[trip_idx];
+    std::cerr << "Anzahl der Transporte für diesen Trip: " << transports.size() << std::endl;
+    
+    if (transports.empty()) {
+      throw std::runtime_error("Keine Transporte für Trip-ID: " + trip_id_str);
+    }
+
+    // Nur Debug-Meldung vor dem Zugriff
+    std::cerr << "Versuche Zugriff auf ersten Transport..." << std::endl;
     // Ersten Transport nehmen und dessen Route
     auto const first_transport = transports[0];
+    std::cerr << "Erster Transport erfolgreich gelesen" << std::endl;
+    std::cerr << "Größe von transport_route_: " << tt.transport_route_.size() << std::endl;
+    std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
     auto const route_idx = tt.transport_route_.at(first_transport.first); // Änderung hier: .first für transport_idx
     
     // Stops aus der Route-Sequenz holen
@@ -104,8 +118,15 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt,
     auto const& stop_sequence = tt.route_location_seq_[route_idx];
     
     // Jeden Stop in ein location-Objekt umwandeln
+    std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
+    std::cerr << "Size of tt.locations_.ids_" << tt.locations_.ids_.size() << std::endl;
     for (auto const stop_idx : stop_sequence) {
-        stops.push_back(tt.locations_.get(nigiri::location_idx_t(stop_idx)));
+        if (stop_idx < tt.locations_.ids_.size()) {
+          stops.push_back(tt.locations_.get(nigiri::location_idx_t(stop_idx)));
+        } else {
+          std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
+          // Hier entsprechende Fehlerbehandlung einfügen
+        }
     }
     
     return stops;
