@@ -1,5 +1,6 @@
 #include "predictors/gtfs-position-tracker.h"
 #include <nigiri/timetable.h>
+#include <chrono>
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/geometries/point.hpp>
@@ -33,7 +34,7 @@ void GTFSPositionTracker::predict(
           bg::set<1>(vehicle_point, vehicle_position->position().latitude());
           bg::set<0>(location_point, location.pos_.lng_());
           bg::set<1>(location_point, location.pos_.lat_());
-
+          transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
           const auto distance = bg::distance(
               vehicle_point, location_point,
               bg::strategy::distance::haversine(6371000.0));
@@ -46,15 +47,26 @@ void GTFSPositionTracker::predict(
                      tripUpdate.trip_update().stop_time_update()) {
                   if (update.stop_id() == location.id_) {
                     tripUpdateExists = true;
+                    stopTimeUpdate = update;
                     break;
                   }
                 }
               }
             }
-            if (tripUpdateExists)
-              updateTripUpdate(message, tripID, location);
-            else
+            if (tripUpdateExists) {
+
+              auto now = std::chrono::system_clock::now();
+              auto current_time =
+                  std::chrono::duration_cast<std::chrono::seconds>(
+                      now.time_since_epoch())
+                      .count();
+              stopTimeUpdate.mutable_departure()->set_time(
+                  std::max(current_time, stopTimeUpdate.departure().time()));
+            }
+            else {
               createTripUpdate(message, tripID, location);
+            }
+
           }
         }
       }
