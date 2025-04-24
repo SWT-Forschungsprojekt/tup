@@ -37,11 +37,25 @@ void GTFSPositionTracker::predict(
           const auto distance = bg::distance(
               vehicle_point, location_point,
               bg::strategy::distance::haversine(6371000.0));
-          if (distance < 100){}
-            if (tripUpdate_exists)
-              updateTripupdate();
-            else:
-              createTripUpdate();
+          if (distance < 100) {
+            bool tripUpdateExists = false;
+            for (const auto& tripUpdate : message.entity()) {
+              if (tripUpdate.has_trip_update() &&
+                  tripUpdate.trip_update().trip().trip_id() == tripID) {
+                for (const auto& update :
+                     tripUpdate.trip_update().stop_time_update()) {
+                  if (update.stop_id() == location.id_) {
+                    tripUpdateExists = true;
+                    break;
+                  }
+                }
+              }
+            }
+            if (tripUpdateExists)
+              updateTripUpdate(message, tripID, location);
+            else
+              createTripUpdate(message, tripID, location);
+          }
         }
       }
     }};
