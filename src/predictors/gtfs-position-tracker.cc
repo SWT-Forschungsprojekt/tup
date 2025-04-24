@@ -1,6 +1,10 @@
 #include "predictors/gtfs-position-tracker.h"
 #include <nigiri/timetable.h>
 
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/strategies/spherical/distance_haversine.hpp>
+
 GTFSPositionTracker::GTFSPositionTracker() = default;
 
 std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable timetable, const std::string& string);
@@ -17,9 +21,28 @@ void GTFSPositionTracker::predict(
         // Get a stop list for a given trip
         std::vector<nigiri::location> stop_list = get_stops_for_trip(timetable, tripID);
         // check for each stop if we are close
-        // if we are close, check if a corresponding tripUpdate exists
-        // if not, create a new one
-        // if yes, update it accordingly
+        for (nigiri::location location : stop_list) {
+
+          namespace bg = boost::geometry;
+          bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
+              vehicle_point;
+          bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
+              location_point;
+
+          bg::set<0>(vehicle_point, vehicle_position->position().longitude());
+          bg::set<1>(vehicle_point, vehicle_position->position().latitude());
+          bg::set<0>(location_point, location.pos_.lng_());
+          bg::set<1>(location_point, location.pos_.lat_());
+
+          const auto distance = bg::distance(
+              vehicle_point, location_point,
+              bg::strategy::distance::haversine(6371000.0));
+          if (distance < 100){}
+            if (tripUpdate_exists)
+              updateTripupdate();
+            else:
+              createTripUpdate();
+        }
       }
     }};
 
