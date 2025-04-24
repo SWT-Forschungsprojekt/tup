@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(tup)
 
+# include custom configuration from motis-project
+include(cmake/buildcache.cmake)
+include(cmake/pkg.cmake)
+
 # --- GTFS-RT PROTOBUF ---
 add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/generated/gtfs-rt/gtfs-realtime.pb.h
@@ -41,7 +45,3 @@ file(GLOB_RECURSE tup-backend-src exe/backend/src/*.cc exe/backend/include/*.h)
 add_executable(tup-backend ${tup-backend-src} ${predictors})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb gtfs-rt http-client)
 target_include_directories(tup-backend PRIVATE exe/backend/include include)
-
-# include custom configuration from motis-project
-include(cmake/buildcache.cmake)
-include(cmake/pkg.cmake)
