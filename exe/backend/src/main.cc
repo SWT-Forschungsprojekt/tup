@@ -5,6 +5,8 @@
 #include "fmt/std.h"
 
 #include "net/stop_handler.h"
+#include "net/ssl.h"
+#include "net/http/client/https_client.h"
 
 #include "http_server.h"
 #include "feed_updater.h"
@@ -18,7 +20,6 @@
 #include "date/date.h"
 
 #include <string>
-#include <curl/curl.h>
 #ifdef NO_DATA
 #undef NO_DATA
 #endif
@@ -31,6 +32,7 @@
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
 
+using namespace net::http::client;
 namespace fs = std::filesystem;
 namespace bpo = boost::program_options;
 using namespace nigiri;
@@ -55,7 +57,7 @@ auto run(boost::asio::io_context& ioc) {
 }
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-  ((std::string*)userp)->append((char*)contents, size * nmemb);
+  static_cast<std::string*>(userp)->append(static_cast<char*>(contents), size * nmemb);
   return size * nmemb;
 }
 
@@ -79,19 +81,26 @@ transit_realtime::FeedMessage dummy_predictor(
 }
 */
 
-bool DownloadProtobuf(const std::string& url, std::string& out_data) {
-  CURL* curl;
-  CURLcode res;
-  curl = curl_easy_init();
-  if (!curl) return false;
+void DownloadProtobuf(const std::string& url, std::string& out_data) {
+  // Boost Asio IO Service object
+  // Represents an 'event loop' for asynchronous Input/Output operations
+  // (such as networking or timers)
+  boost::asio::io_service ios;
+  request request{url,request::method::GET};
 
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out_data);
-  res = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+  make_https(ios, request.address)
+      ->query(request, [&out_data](std::shared_ptr<net::ssl> const&, response const& res,
+                          const boost::system::error_code& ec) {
+        if (ec) {
+          std::cout << "error: " << ec.message() << "\n";
+        } else {
+            out_data = res.body;
+        }
+      });
 
-  return (res == CURLE_OK);
+  // Start asynchronous event loop.
+  // This is required in order to start the request!
+  ios.run();
 }
 
 int main(int argc, char const* argv[]) {
@@ -175,7 +184,7 @@ int main(int argc, char const* argv[]) {
       bpo::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
   bpo::notify(vm);
 
-  if (vm.count("help") != 0U) {
+  if (vm.contains("help")) {
     std::cout << desc << "\n";
     return 0;
   }
@@ -227,10 +236,7 @@ int main(int argc, char const* argv[]) {
 
   std::string protobuf_data;
 
-  if (!DownloadProtobuf(vehicle_position_url, protobuf_data)) {
-    std::cerr << "Fehler beim Herunterladen der Protobuf-Datei" << std::endl;
-    return 1;
-  }
+  DownloadProtobuf(vehicle_position_url, protobuf_data);
 
   transit_realtime::FeedMessage feed;
   if (!feed.ParseFromString(protobuf_data)) {

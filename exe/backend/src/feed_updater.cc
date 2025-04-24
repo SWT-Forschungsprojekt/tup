@@ -1,8 +1,11 @@
 #include "feed_updater.h"
 #include <iostream>
-#include <curl/curl.h>
 #include <chrono>
 #include <thread>
+
+#include "net/http/client/https_client.h"
+
+using namespace net::http::client;
 
 FeedUpdater::~FeedUpdater() {
   stop();
@@ -34,16 +37,26 @@ void FeedUpdater::run() {
 
 bool FeedUpdater::downloadFeed() {
   std::string protobuf_data;
-  CURL* curl = curl_easy_init();
-  if (!curl) return false;
+  // Boost Asio IO Service object
+  // Represents an 'event loop' for asynchronous Input/Output operations
+  // (such as networking or timers)
+  boost::asio::io_service ios;
+  request request{url_,request::method::GET};
 
-  curl_easy_setopt(curl, CURLOPT_URL, url_.c_str());
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &protobuf_data);
-  CURLcode res = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+  make_https(ios, request.address)
+      ->query(request, [&protobuf_data](std::shared_ptr<net::ssl> const&, response const& res,
+                          const boost::system::error_code& ec) {
+        if (ec) {
+          std::cout << "error: " << ec.message() << "\n";
+        } else {
+            protobuf_data = res.body;
+        }
+      });
 
-  if (res != CURLE_OK) return false;
+  // Start asynchronous event loop.
+  // This is required in order to start the request!
+  ios.run();
+
 
   transit_realtime::FeedMessage new_feed;
   if (!new_feed.ParseFromString(protobuf_data)) return false;
