@@ -8,7 +8,10 @@
 
 GTFSPositionTracker::GTFSPositionTracker() = default;
 
-std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable timetable, const std::string& string);
+// Function declarations
+std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, std::string const& trip_id_str);
+auto convert_trip_id_to_idx(nigiri::timetable const& tt, std::string const& trip_id) -> nigiri::trip_idx_t;
+
 void GTFSPositionTracker::predict(
     transit_realtime::FeedMessage& message,
     const transit_realtime::FeedMessage& vehiclePositions,
@@ -32,8 +35,8 @@ void GTFSPositionTracker::predict(
 
           bg::set<0>(vehicle_point, vehicle_position->position().longitude());
           bg::set<1>(vehicle_point, vehicle_position->position().latitude());
-          bg::set<0>(location_point, location.pos_.lng_());
-          bg::set<1>(location_point, location.pos_.lat_());
+          bg::set<0>(location_point, location.pos_.lng_);
+          bg::set<1>(location_point, location.pos_.lat_);
           const auto distance = bg::distance(
               vehicle_point, location_point,
               bg::strategy::distance::haversine(6371000.0));
@@ -83,20 +86,8 @@ void GTFSPositionTracker::predict(
 
 std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, 
                                                 std::string const& trip_id_str) {
-    // Trip-ID aus String erstellen
-    auto const trip_id = nigiri::trip_id{trip_id_str};
-    
     // Trip-ID in internen Index umwandeln
-    auto const trip_id_pair = std::ranges::find_if(tt.trip_id_to_idx_,
-        [&](auto const& pair) {
-            return tt.trip_id_strings_[pair.first] == trip_id;
-        });
-    
-    if (trip_id_pair == tt.trip_id_to_idx_.end()) {
-        throw std::runtime_error("Trip ID nicht gefunden: " + trip_id_str);
-    }
-    
-    auto const trip_idx = trip_id_pair->second;
+    auto const trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
     
     // Route für den Trip finden
     auto const& transports = tt.trip_transport_ranges_[trip_idx];
@@ -118,4 +109,19 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt,
     }
     
     return stops;
+}
+
+auto convert_trip_id_to_idx(nigiri::timetable const& tt, std::string const& trip_id) -> nigiri::trip_idx_t {
+    // Iteriere durch trip_id_strings_ mit korrektem Indextyp
+    for (std::size_t i = 0; i < tt.trip_id_strings_.size(); ++i) {
+        if (tt.trip_id_strings_[nigiri::trip_id_idx_t{static_cast<unsigned>(i)}].view() == trip_id) {
+            // Finde das entsprechende Paar in trip_id_to_idx_
+            for (auto const& pair : tt.trip_id_to_idx_) {
+                if (pair.first == nigiri::trip_id_idx_t{static_cast<unsigned>(i)}) {
+                    return pair.second;
+                }
+            }
+        }
+    }
+    throw std::runtime_error("Trip ID nicht gefunden: " + trip_id);
 }
