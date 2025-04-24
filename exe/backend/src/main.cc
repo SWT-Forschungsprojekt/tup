@@ -10,6 +10,7 @@
 
 #include "http_server.h"
 #include "feed_updater.h"
+#include "predictors/simple-predictor.h"
 
 #include <vector>
 
@@ -60,6 +61,11 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
+/*
+* Dummy predictor function that does nothing.
+* This is just a placeholder for the actual prediction logic.
+*/
+/*
 transit_realtime::FeedMessage dummy_predictor(
     const transit_realtime::FeedMessage& input_feed) {
   transit_realtime::FeedMessage feed;
@@ -73,6 +79,7 @@ transit_realtime::FeedMessage dummy_predictor(
   feed.SerializeToString(&serialized_feed);
   return feed;
 }
+*/
 
 void DownloadProtobuf(const std::string& url, std::string& out_data) {
   // Boost Asio IO Service object
@@ -220,7 +227,6 @@ int main(int argc, char const* argv[]) {
 
   auto ioc = boost::asio::io_context{};
   auto pool = boost::asio::io_context{};
-  auto server = http_server{ioc, pool, static_file_path};
 
   auto work_guard = boost::asio::make_work_guard(pool);
   auto threads = std::vector<std::thread>(std::max(1U, threads_));
@@ -240,12 +246,24 @@ int main(int argc, char const* argv[]) {
 
   std::cout << "Success" << std::endl;
 
-  server.listen(http_host, http_port);
+  //Initialize the predictor
+  SimplePredictor dummy_predictor{
+    std::chrono::milliseconds{300000}, // 1000 * 60 * 5 Should be 5 minutes
+    false
+  };
+
+  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& msg) {
+    dummy_predictor.predict(msg);
+  };
+
 
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
-  FeedUpdater feedUpdater(feed, vehicle_position_url, dummy_predictor);
+  FeedUpdater feedUpdater(feed, vehicle_position_url, method);
   feedUpdater.start();
+  
+  auto server = http_server{ioc, pool, static_file_path, feedUpdater.getFeed()};
 
+  server.listen(http_host, http_port);
 
   auto const stop = net::stop_handler(ioc, [&]() {
     feedUpdater.stop();

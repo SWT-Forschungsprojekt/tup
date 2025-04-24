@@ -60,7 +60,7 @@ bool FeedUpdater::downloadFeed() {
 
   transit_realtime::FeedMessage new_feed;
   if (!new_feed.ParseFromString(protobuf_data)) return false;
-
-  feed_ = predictionMethod_(new_feed);  // Aktualisiere den Feed
+  predictionMethod_(new_feed);
+  feed_ = new_feed;  // Aktualisiere den Feed
   return true;
 }
