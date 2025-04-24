@@ -54,6 +54,33 @@ void SimplePredictor::predict(transit_realtime::FeedMessage& message) {
           }
         }
       }
+    }else{
+      transit_realtime::TripUpdate* tripUpdate = entity->mutable_trip_update();
+      for (int j = 0; j < tripUpdate->stop_time_update_size(); ++j) {
+        transit_realtime::TripUpdate_StopTimeUpdate* stopTimeUpdate = tripUpdate->mutable_stop_time_update(j);
+
+        if (stopTimeUpdate->has_arrival() && stopTimeUpdate->arrival().has_time()) {
+          transit_realtime::TripUpdate_StopTimeEvent* arrival = stopTimeUpdate->mutable_arrival();
+          arrival->set_time(arrival->time() + delay);
+        }
+
+        if (stopTimeUpdate->has_departure() && stopTimeUpdate->departure().has_time()) {
+          transit_realtime::TripUpdate_StopTimeEvent* departure = stopTimeUpdate->mutable_departure();
+
+          // Check if the arrival + delay is greater than the departure time
+          if (stopTimeUpdate->has_arrival() && stopTimeUpdate->arrival().has_time()) {
+            transit_realtime::TripUpdate_StopTimeEvent* arrival = stopTimeUpdate->mutable_arrival();
+            if (arrival->time() + static_cast<int64_t>(delay) > departure->time()) {
+              // If so, set the departure time to be the same as the arrival time
+              departure->set_time(arrival->time() + delay);
+            }
+          }
+          else {
+            // If there is no arrival time, just add the delay to the departure time
+            departure->set_time(departure->time() + delay);
+          }
+        }
+      }
     }
   }
 
