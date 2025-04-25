@@ -63,26 +63,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
-/*
-* Dummy predictor function that does nothing.
-* This is just a placeholder for the actual prediction logic.
-*/
-/*
-transit_realtime::FeedMessage dummy_predictor(
-    const transit_realtime::FeedMessage& input_feed) {
-  transit_realtime::FeedMessage feed;
-  transit_realtime::FeedHeader* header = feed.mutable_header();
-
-  header->set_gtfs_realtime_version("2.0");
-  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
-  header->set_timestamp(time(nullptr));
-
-  std::string serialized_feed;
-  feed.SerializeToString(&serialized_feed);
-  return feed;
-}
-*/
-
 void DownloadProtobuf(const std::string& url, std::string& out_data) {
   // Boost Asio IO Service object
   // Represents an 'event loop' for asynchronous Input/Output operations
@@ -248,6 +228,11 @@ int main(int argc, char const* argv[]) {
 
   std::cout << "Success" << std::endl;
   auto tripUpdatesFeed = transit_realtime::FeedMessage{};
+  transit_realtime::FeedHeader* header = tripUpdatesFeed.mutable_header();
+
+  header->set_gtfs_realtime_version("2.0");
+  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+  header->set_timestamp(time(nullptr));
   FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& vehiclePositions) {
     GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
   };
