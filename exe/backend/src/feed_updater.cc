@@ -35,6 +35,12 @@ void FeedUpdater::run() {
   }
 }
 
+/**
+ * Downloads the vehicle Positions feed and updates the tripUpdates feed with
+ * the predictionMethod
+ *
+ * @return whether everything went right
+ */
 bool FeedUpdater::downloadFeed() {
   std::string protobuf_data;
   // Boost Asio IO Service object
@@ -53,14 +59,13 @@ bool FeedUpdater::downloadFeed() {
         }
       });
 
-  // Start asynchronous event loop.
-  // This is required in order to start the request!
+  // Start an asynchronous event loop.
+  // This is required to start the request!
   ios.run();
-
 
   transit_realtime::FeedMessage new_feed;
   if (!new_feed.ParseFromString(protobuf_data)) return false;
+  // TODO: Make predictionMethod return updated feed and update feed afterwards to have atomic updates
   predictionMethod_(new_feed);
-  feed_ = new_feed;  // Aktualisiere den Feed
   return true;
 }
