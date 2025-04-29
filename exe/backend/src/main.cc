@@ -63,28 +63,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   return size * nmemb;
 }
 
-void DownloadProtobuf(const std::string& url, std::string& out_data) {
-  // Boost Asio IO Service object
-  // Represents an 'event loop' for asynchronous Input/Output operations
-  // (such as networking or timers)
-  boost::asio::io_service ios;
-  request request{url,request::method::GET};
-
-  make_https(ios, request.address)
-      ->query(request, [&out_data](std::shared_ptr<net::ssl> const&, response const& res,
-                          const boost::system::error_code& ec) {
-        if (ec) {
-          std::cout << "error: " << ec.message() << "\n";
-        } else {
-            out_data = res.body;
-        }
-      });
-
-  // Start asynchronous event loop.
-  // This is required in order to start the request!
-  ios.run();
-}
-
 int main(int argc, char const* argv[]) {
   std::cout << "Hello, World!" << std::endl;
 
@@ -216,16 +194,6 @@ int main(int argc, char const* argv[]) {
     t = std::thread(run(pool));
   }
 
-  std::string protobuf_data;
-
-  DownloadProtobuf(vehicle_position_url, protobuf_data);
-
-  transit_realtime::FeedMessage feed;
-  if (!feed.ParseFromString(protobuf_data)) {
-    std::cerr << "Fehler beim Parsen der Protobuf-Daten" << std::endl;
-    return 1;
-  }
-
   std::cout << "Success" << std::endl;
   auto tripUpdatesFeed = transit_realtime::FeedMessage{};
   transit_realtime::FeedHeader* header = tripUpdatesFeed.mutable_header();
@@ -239,7 +207,7 @@ int main(int argc, char const* argv[]) {
 
 
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
-  FeedUpdater feedUpdater(feed, vehicle_position_url, method);
+  FeedUpdater feedUpdater(tripUpdatesFeed, vehicle_position_url, method);
   feedUpdater.start();
   
   auto server = http_server{ioc, pool, static_file_path, feedUpdater.getFeed()};
