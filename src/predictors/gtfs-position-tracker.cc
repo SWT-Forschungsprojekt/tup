@@ -9,11 +9,20 @@
 GTFSPositionTracker::GTFSPositionTracker() = default;
 
 // Function declarations
-std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, std::string const& trip_id_str);
-auto convert_trip_id_to_idx(nigiri::timetable const& tt, std::string const& trip_id) -> nigiri::trip_idx_t;
+std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timetable, std::string const& trip_id);
+auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string const& trip_id) -> nigiri::trip_idx_t;
 
+/**
+ * Predictor based on the GTFS-Position-tracker approach
+ * This checks if any of the vehicle Positions is close to a stop. If so,
+ * a tripUpdate for the according trip and stop will be created.
+ *
+ * @param tripUpdates current tripUpdate feed to be updated
+ * @param vehiclePositions positions of vehicles as feed
+ * @param timetable timetable to match the vehiclePositions to stops
+ */
 void GTFSPositionTracker::predict(
-    transit_realtime::FeedMessage& message,
+    transit_realtime::FeedMessage& tripUpdates,
     transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
     for (int i = 0; i < vehiclePositions.entity_size(); i++) {
@@ -43,7 +52,7 @@ void GTFSPositionTracker::predict(
           if (distance < 100) {
             transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
             bool tripUpdateExists = false;
-            for (const auto& tripUpdate : message.entity()) {
+            for (const auto& tripUpdate : tripUpdates.entity()) {
               if (tripUpdate.has_trip_update() &&
                   tripUpdate.trip_update().trip().trip_id() == tripID) {
                 for (const auto& update :
@@ -66,7 +75,7 @@ void GTFSPositionTracker::predict(
                   std::max(current_time, stopTimeUpdate.departure().time()));
             }
             else {
-              transit_realtime::FeedEntity* new_entity = message.add_entity();
+              transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
               new_entity->set_id(tripID);
 
               transit_realtime::TripUpdate* trip_update =
@@ -84,30 +93,36 @@ void GTFSPositionTracker::predict(
       }
     }};
 
-std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt, 
-                                                std::string const& trip_id_str) {
-    std::cerr << "Suche Trip-ID: " << trip_id_str << std::endl;
+/**
+ * Returns all stops that belong to a route of a trip
+ * @param timetable timetable to look up the stops belonging to a trip
+ * @param trip_id of the trip the stops belong to
+ * @return all stops that belong to a route of a trip
+ */
+std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timetable,
+                                                std::string const& trip_id) {
+    std::cerr << "Suche Trip-ID: " << trip_id << std::endl;
     
     nigiri::trip_idx_t trip_idx;
     try {
-        trip_idx = convert_trip_id_to_idx(tt, trip_id_str);
+        trip_idx = convert_trip_id_to_idx(timetable, trip_id);
     } catch (const std::runtime_error& e) {
         std::cerr << "Fehler: " << e.what() << std::endl;
         return std::vector<nigiri::location>();
     }
     
     std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
-    std::cerr << "Anzahl der Transporte: " << tt.trip_transport_ranges_.size() << std::endl;
+    std::cerr << "Anzahl der Transporte: " << timetable.trip_transport_ranges_.size() << std::endl;
     
-    if (trip_idx >= tt.trip_transport_ranges_.size()) {
+    if (trip_idx >= timetable.trip_transport_ranges_.size()) {
         throw std::runtime_error("Trip-Index außerhalb des gültigen Bereichs");
     }
     
-    auto const& transports = tt.trip_transport_ranges_[trip_idx];
+    auto const& transports = timetable.trip_transport_ranges_[trip_idx];
     std::cerr << "Anzahl der Transporte für diesen Trip: " << transports.size() << std::endl;
     
     if (transports.empty()) {
-      throw std::runtime_error("Keine Transporte für Trip-ID: " + trip_id_str);
+      throw std::runtime_error("Keine Transporte für Trip-ID: " + trip_id);
     }
 
     // Nur Debug-Meldung vor dem Zugriff
@@ -115,20 +130,20 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt,
     // Ersten Transport nehmen und dessen Route
     auto const first_transport = transports[0];
     std::cerr << "Erster Transport erfolgreich gelesen" << std::endl;
-    std::cerr << "Größe von transport_route_: " << tt.transport_route_.size() << std::endl;
+    std::cerr << "Größe von transport_route_: " << timetable.transport_route_.size() << std::endl;
     std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
-    auto const route_idx = tt.transport_route_.at(first_transport.first); // Änderung hier: .first für transport_idx
+    auto const route_idx = timetable.transport_route_.at(first_transport.first); // Änderung hier: .first für transport_idx
     
     // Stops aus der Route-Sequenz holen
     std::vector<nigiri::location> stops;
-    auto const& stop_sequence = tt.route_location_seq_[route_idx];
+    auto const& stop_sequence = timetable.route_location_seq_[route_idx];
     
     // Jeden Stop in ein location-Objekt umwandeln
     std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
-    std::cerr << "Size of tt.locations_.ids_" << tt.locations_.ids_.size() << std::endl;
+    std::cerr << "Size of timetable.locations_.ids_" << timetable.locations_.ids_.size() << std::endl;
     for (auto const stop_idx : stop_sequence) {
-        if (stop_idx < tt.locations_.ids_.size()) {
-          stops.push_back(tt.locations_.get(nigiri::location_idx_t(stop_idx)));
+        if (stop_idx < timetable.locations_.ids_.size()) {
+          stops.push_back(timetable.locations_.get(nigiri::location_idx_t(stop_idx)));
         } else {
           std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
           // Hier entsprechende Fehlerbehandlung einfügen
@@ -138,12 +153,18 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& tt,
     return stops;
 }
 
-auto convert_trip_id_to_idx(nigiri::timetable const& tt, std::string const& trip_id) -> nigiri::trip_idx_t {
+/**
+ * Converts a trip id to the index where the trip is stored in memory
+ * @param timetable to look up the location
+ * @param trip_id to convert
+ * @return index of the trip
+ */
+auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string const& trip_id) -> nigiri::trip_idx_t {
     // Iteriere durch trip_id_strings_ mit korrektem Indextyp
-    for (std::size_t i = 0; i < tt.trip_id_strings_.size(); ++i) {
-        if (tt.trip_id_strings_[nigiri::trip_id_idx_t{static_cast<unsigned>(i)}].view() == trip_id) {
+    for (std::size_t i = 0; i < timetable.trip_id_strings_.size(); ++i) {
+        if (timetable.trip_id_strings_[nigiri::trip_id_idx_t{static_cast<unsigned>(i)}].view() == trip_id) {
             // Finde das entsprechende Paar in trip_id_to_idx_
-            for (auto const& pair : tt.trip_id_to_idx_) {
+            for (auto const& pair : timetable.trip_id_to_idx_) {
                 if (pair.first == nigiri::trip_id_idx_t{static_cast<unsigned>(i)}) {
                     return pair.second;
                 }
