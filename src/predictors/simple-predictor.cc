@@ -1,5 +1,6 @@
 #include "predictors/simple-predictor.h"
 #include <random>
+#include <cstdint>
 
 
 SimplePredictor::SimplePredictor(std::chrono::milliseconds delay, bool random) {
@@ -90,5 +91,5 @@ void SimplePredictor::predict(transit_realtime::FeedMessage& message) {
   header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
   header->set_gtfs_realtime_version("2.0");
 
-  
+
 };

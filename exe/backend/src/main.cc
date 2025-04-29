@@ -32,6 +32,8 @@
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
 
+#include "../../../include/predictors/gtfs-position-tracker.h"
+
 using namespace net::http::client;
 namespace fs = std::filesystem;
 namespace bpo = boost::program_options;
@@ -60,26 +62,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
   static_cast<std::string*>(userp)->append(static_cast<char*>(contents), size * nmemb);
   return size * nmemb;
 }
-
-/*
-* Dummy predictor function that does nothing.
-* This is just a placeholder for the actual prediction logic.
-*/
-/*
-transit_realtime::FeedMessage dummy_predictor(
-    const transit_realtime::FeedMessage& input_feed) {
-  transit_realtime::FeedMessage feed;
-  transit_realtime::FeedHeader* header = feed.mutable_header();
-
-  header->set_gtfs_realtime_version("2.0");
-  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
-  header->set_timestamp(time(nullptr));
-
-  std::string serialized_feed;
-  feed.SerializeToString(&serialized_feed);
-  return feed;
-}
-*/
 
 void DownloadProtobuf(const std::string& url, std::string& out_data) {
   // Boost Asio IO Service object
@@ -221,9 +203,9 @@ int main(int argc, char const* argv[]) {
   }
 
   auto const start = parse_date(start_date);
-  load(input_files, finalize_opt, {start, start + date::days{n_days}},
-       assistance.get(), shapes.get(), ignore && recursive)
-      .write(out);
+  auto timetable = load(input_files, finalize_opt, {start, start + date::days{n_days}},
+       assistance.get(), shapes.get(), ignore && recursive);
+
 
   auto ioc = boost::asio::io_context{};
   auto pool = boost::asio::io_context{};
@@ -245,15 +227,14 @@ int main(int argc, char const* argv[]) {
   }
 
   std::cout << "Success" << std::endl;
+  auto tripUpdatesFeed = transit_realtime::FeedMessage{};
+  transit_realtime::FeedHeader* header = tripUpdatesFeed.mutable_header();
 
-  //Initialize the predictor
-  SimplePredictor dummy_predictor{
-    std::chrono::milliseconds{300000}, // 1000 * 60 * 5 Should be 5 minutes
-    false
-  };
-
-  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& msg) {
-    dummy_predictor.predict(msg);
+  header->set_gtfs_realtime_version("2.0");
+  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+  header->set_timestamp(time(nullptr));
+  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+    GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
   };
 
 
