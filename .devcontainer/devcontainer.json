@@ -4,6 +4,6 @@
 	"name": "C++",
 	"build": {
 		"dockerfile": "Dockerfile"
-	}
-
+	},
+	"forwardPorts": [8000]
 }

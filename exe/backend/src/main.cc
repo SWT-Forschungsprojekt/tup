@@ -202,18 +202,18 @@ int main(int argc, char const* argv[]) {
   header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
   header->set_timestamp(time(nullptr));
   if (predictor == "gtfs-position-tracker") {
-    method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
       GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
     };
   } else if (predictor == "dummy") {
-    method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
       SimplePredictor simple_predictor(std::chrono::milliseconds(5000), true);
       simple_predictor.predict(vehiclePositions);
         };
   } else {
     std::cout << "No valid predictor chosen!" << std::endl;
     return 1;
-  } 
+  }
 
 
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
