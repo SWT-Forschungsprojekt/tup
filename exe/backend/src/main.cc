@@ -201,7 +201,9 @@ int main(int argc, char const* argv[]) {
   header->set_gtfs_realtime_version("2.0");
   header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
   header->set_timestamp(time(nullptr));
-  FeedUpdater::PredictionMethod method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+
+  
+  FeedUpdater::PredictionMethod method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
     GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
   };
 
