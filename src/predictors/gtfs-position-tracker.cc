@@ -26,7 +26,7 @@ void GTFSPositionTracker::predict(
     const transit_realtime::FeedMessage& vehiclePositionFeed,
     const nigiri::timetable& timetable) {
     for (const transit_realtime::FeedEntity& entity : vehiclePositionFeed.entity()) {
-      //ToDo: What happen if some entities do not ahve a vehicle? I mean this would not help tup with the prediction, but since motis consumes our stream we should not digard them
+      // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
       if (entity.has_vehicle()) {
         const transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
         // Get Trip ID
@@ -52,6 +52,7 @@ void GTFSPositionTracker::predict(
           if (distance < 100) {
             transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
             bool tripUpdateExists = false;
+
             for (const transit_realtime::FeedEntity& outputFeedEntity : outputFeed.entity()) {
               if (outputFeedEntity.has_trip_update() &&
                   outputFeedEntity.trip_update().trip().trip_id() == tripID) {
@@ -64,6 +65,7 @@ void GTFSPositionTracker::predict(
                 }
               }
             }
+
             auto now = std::chrono::system_clock::now();
             auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
             
@@ -79,6 +81,8 @@ void GTFSPositionTracker::predict(
               transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = trip_update->add_stop_time_update();
               stop_time_update->set_stop_id(location.id_);
               stop_time_update->mutable_departure()->set_time(current_time);
+
+              std::cerr << "Create trip update" << timetable.locations_.ids_.size() << std::endl;
             }
 
           }
@@ -138,7 +142,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         if (stop_idx < timetable.locations_.ids_.size()) {
           stops.push_back(timetable.locations_.get(nigiri::location_idx_t(stop_idx)));
         } else {
-          std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
+          //std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
           // Hier entsprechende Fehlerbehandlung einfügen
         }
     }
