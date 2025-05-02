@@ -16,6 +16,6 @@ class GTFSPositionTracker {
      * @param vehiclePositions current VehiclePositions feed
      * @param timetable matching the realtime feeds
      */
-static void predict(transit_realtime::FeedMessage& tripUpdates, transit_realtime::FeedMessage& vehiclePositions,
+static void predict(transit_realtime::FeedMessage& tripUpdates, const transit_realtime::FeedMessage& vehiclePositions,
                         const nigiri::timetable& timetable);
 };
