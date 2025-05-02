@@ -206,8 +206,8 @@ int main(int argc, char const* argv[]) {
       GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
     };
   } else if (predictor == "dummy") {
-    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
-      SimplePredictor simple_predictor(std::chrono::milliseconds(5000), true);
+    method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+      SimplePredictor simple_predictor(std::chrono::milliseconds(5000), false);
       simple_predictor.predict(vehiclePositions);
         };
   } else {
