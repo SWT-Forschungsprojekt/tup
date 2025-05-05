@@ -1,4 +1,5 @@
 #include "predictors/gtfs-position-tracker.h"
+#include "predictors/predictor-utils.h"
 #include <nigiri/timetable.h>
 #include <chrono>
 
@@ -7,10 +8,6 @@
 #include <boost/geometry/strategies/spherical/distance_haversine.hpp>
 
 GTFSPositionTracker::GTFSPositionTracker() = default;
-
-// Function declarations
-std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timetable, std::string const& trip_id);
-auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string const& trip_id) -> nigiri::trip_idx_t;
 
 /**
  * Predictor based on the GTFS-Position-tracker approach
@@ -32,7 +29,7 @@ void GTFSPositionTracker::predict(
         // Get Trip ID
         std::string tripID = vehicle_position.trip().trip_id();
         // Get a stop list for a given trip
-        std::vector<nigiri::location> stop_list = get_stops_for_trip(timetable, tripID);
+        std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
         // check for each stop if we are close
         for (nigiri::location location : stop_list) {
 
@@ -107,17 +104,17 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         std::cerr << "Fehler: " << e.what() << std::endl;
         return {};
     }
-    
+
     std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
     std::cerr << "Anzahl der Transporte: " << timetable.trip_transport_ranges_.size() << std::endl;
-    
+
     if (trip_idx >= timetable.trip_transport_ranges_.size()) {
         throw std::runtime_error("Trip-Index außerhalb des gültigen Bereichs");
     }
-    
+
     auto const& transports = timetable.trip_transport_ranges_[trip_idx];
     std::cerr << "Anzahl der Transporte für diesen Trip: " << transports.size() << std::endl;
-    
+
     if (transports.empty()) {
       throw std::runtime_error("Keine Transporte für Trip-ID: " + trip_id);
     }
@@ -134,7 +131,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
     // Stops aus der Route-Sequenz holen
     std::vector<nigiri::location> stops;
     auto const& stop_sequence = timetable.route_location_seq_[route_idx];
-    
+
     // Jeden Stop in ein location-Objekt umwandeln
     std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
     std::cerr << "Size of timetable.locations_.ids_" << timetable.locations_.ids_.size() << std::endl;
