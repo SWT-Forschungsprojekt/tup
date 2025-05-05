@@ -17,8 +17,8 @@ auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string cons
  * This checks if any of the vehicle Positions is close to a stop. If so,
  * a tripUpdate for the according trip and stop will be created.
  *
- * @param tripUpdates current tripUpdate feed to be updated
- * @param vehiclePositions positions of vehicles as feed
+ * @param outputFeed current tripUpdate feed to be updated
+ * @param vehiclePositionFeed positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void GTFSPositionTracker::predict(
@@ -105,7 +105,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         trip_idx = convert_trip_id_to_idx(timetable, trip_id);
     } catch (const std::runtime_error& e) {
         std::cerr << "Fehler: " << e.what() << std::endl;
-        return std::vector<nigiri::location>();
+        return {};
     }
     
     std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
@@ -142,7 +142,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         if (stop_idx < timetable.locations_.ids_.size()) {
           stops.push_back(timetable.locations_.get(nigiri::location_idx_t(stop_idx)));
         } else {
-          //std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
+          std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
           // Hier entsprechende Fehlerbehandlung einfügen
         }
     }
