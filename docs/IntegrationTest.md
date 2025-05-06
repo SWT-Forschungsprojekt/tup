@@ -3,6 +3,11 @@ When tup itself has been built, one might want to try it in combination with con
 This described how to set up motis together with tup with consistent datasets.
 
 ## Setup tup + MOTIS
+
+Windows only: 
+  If you want to run motis with the devcontainer setup the easiest way is to do the setup inside the wsl. To do this open a terminal on you windows machine and type `wsl`. Now you are on you "Linux System". Navigate to an directory where you want to put your motis setup and follow the next steps.
+
+
 1. Get motis and extract it:
     ```shell
     wget -O motis.tar.bz2 https://github.com/motis-project/motis/releases/latest/download/motis-linux-amd64.tar.bz2
