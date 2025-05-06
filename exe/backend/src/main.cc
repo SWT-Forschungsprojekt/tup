@@ -11,6 +11,7 @@
 #include "http_server.h"
 #include "feed_updater.h"
 #include "predictors/simple-predictor.h"
+#include "predictors/gtfs-position-tracker.h"
 
 #include <vector>
 
@@ -31,8 +32,6 @@
 #include "nigiri/loader/loader_interface.h"
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
-
-#include "../../../include/predictors/gtfs-position-tracker.h"
 
 using namespace net::http::client;
 namespace fs = std::filesystem;
@@ -78,6 +77,7 @@ int main(int argc, char const* argv[]) {
   bool lock = true;
 
   std::string vehicle_position_url;
+  std::string predictor;
 
   auto in = fs::path{};
   auto out = fs::path{"tt.bin"};
@@ -104,7 +104,7 @@ int main(int argc, char const* argv[]) {
       ("lock,l", bpo::bool_switch(&lock)->default_value(lock), "Lock to memory")  //
 
       ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
-
+      ("predictor,P", bpo::value(&predictor)->default_value("gtfs-position-tracker"), "Choose which predictor to use")
       ("in,i", bpo::value(&in)->required(), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
@@ -194,18 +194,26 @@ int main(int argc, char const* argv[]) {
     t = std::thread(run(pool));
   }
 
-  std::cout << "Success" << std::endl;
+  
   auto tripUpdatesFeed = transit_realtime::FeedMessage{};
   transit_realtime::FeedHeader* header = tripUpdatesFeed.mutable_header();
-
+  FeedUpdater::PredictionMethod method;
   header->set_gtfs_realtime_version("2.0");
   header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
   header->set_timestamp(time(nullptr));
-
-  
-  FeedUpdater::PredictionMethod method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
-    GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
-  };
+  if (predictor == "gtfs-position-tracker") {
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
+      GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
+    };
+  } else if (predictor == "dummy") {
+    method = [&](transit_realtime::FeedMessage& vehiclePositions) {
+      SimplePredictor simple_predictor(std::chrono::milliseconds(5000), false);
+      simple_predictor.predict(vehiclePositions);
+        };
+  } else {
+    std::cout << "No valid predictor chosen!" << std::endl;
+    return 1;
+  }
 
 
   // Spawn a new thread that fetches the feed and updates the output feed accordingly continuously
