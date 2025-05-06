@@ -47,27 +47,39 @@ void GTFSPositionTracker::predict(
           const auto distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
 
           if (distance < 100) {
-            transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
             bool tripUpdateExists = false;
+            transit_realtime::FeedEntity* entityToUpdate;
+            bool stopTimeUpdateExists = false;
+            transit_realtime::TripUpdate_StopTimeUpdate* stopTimeUpdate;
 
             for (const transit_realtime::FeedEntity& outputFeedEntity : outputFeed.entity()) {
-              if (outputFeedEntity.has_trip_update() &&
-                  outputFeedEntity.trip_update().trip().trip_id() == tripID) {
+              if (outputFeedEntity.has_trip_update() && outputFeedEntity.trip_update().trip().trip_id() == tripID) {
+                tripUpdateExists = true;
+                entityToUpdate = outputFeedEntity;
                 for (const transit_realtime::TripUpdate_StopTimeUpdate& update : outputFeedEntity.trip_update().stop_time_update()) {
                   if (update.stop_id() == location.id_) {
-                    tripUpdateExists = true;
+                    stopTimeUpdateExists = true;
                     stopTimeUpdate = update;
                     break;
                   }
-                }
+                } 
               }
             }
 
             auto now = std::chrono::system_clock::now();
             auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
             
-            if (tripUpdateExists) {
+            if (tripUpdateExists && stopTimeUpdateExists) {
               stopTimeUpdate.mutable_departure()->set_time(std::max(current_time, stopTimeUpdate.departure().time()));
+            } else if(tripUpdateExists && !stopTimeUpdateExists) {
+              transit_realtime::TripUpdate* trip_update = entityToUpdate->mutable_trip_update();
+
+              transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = trip_update->add_stop_time_update();
+              stop_time_update->set_stop_id(location.id_);
+              stop_time_update->mutable_departure()->set_time(current_time);
+
+              std::cerr << "Update trip update" << timetable.locations_.ids_.size() << std::endl;
+
             } else {
               transit_realtime::FeedEntity* new_entity = outputFeed.add_entity();
               new_entity->set_id(tripID);
