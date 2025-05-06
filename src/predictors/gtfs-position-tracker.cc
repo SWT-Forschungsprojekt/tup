@@ -17,8 +17,8 @@ auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string cons
  * This checks if any of the vehicle Positions is close to a stop. If so,
  * a tripUpdate for the according trip and stop will be created.
  *
- * @param tripUpdates current tripUpdate feed to be updated
- * @param vehiclePositions positions of vehicles as feed
+ * @param outputFeed current tripUpdate feed to be updated
+ * @param vehiclePositionFeed positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void GTFSPositionTracker::predict(
@@ -105,7 +105,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         trip_idx = convert_trip_id_to_idx(timetable, trip_id);
     } catch (const std::runtime_error& e) {
         std::cerr << "Fehler: " << e.what() << std::endl;
-        return std::vector<nigiri::location>();
+        return {};
     }
     
     std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
@@ -125,12 +125,12 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
     // Nur Debug-Meldung vor dem Zugriff
     std::cerr << "Versuche Zugriff auf ersten Transport..." << std::endl;
     // Ersten Transport nehmen und dessen Route
-    auto const first_transport = transports[0];
+    const cista::strong<unsigned, nigiri::_transport_idx> first = transports[0].first;
     std::cerr << "Erster Transport erfolgreich gelesen" << std::endl;
     std::cerr << "Größe von transport_route_: " << timetable.transport_route_.size() << std::endl;
     std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
-    auto const route_idx = timetable.transport_route_.at(first_transport.first); // Änderung hier: .first für transport_idx
-    
+    nigiri::route_idx_t const route_idx = timetable.transport_route_.at(first);
+
     // Stops aus der Route-Sequenz holen
     std::vector<nigiri::location> stops;
     auto const& stop_sequence = timetable.route_location_seq_[route_idx];
@@ -138,15 +138,10 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
     // Jeden Stop in ein location-Objekt umwandeln
     std::cerr << "Versuche Zugriff auf Transport-Route..." << std::endl;
     std::cerr << "Size of timetable.locations_.ids_" << timetable.locations_.ids_.size() << std::endl;
-    for (auto const stop_idx : stop_sequence) {
-        if (stop_idx < timetable.locations_.ids_.size()) {
-          stops.push_back(timetable.locations_.get(nigiri::location_idx_t(stop_idx)));
-        } else {
-          //std::cerr << "Warnung: Ungültiger Stop-Index: " << stop_idx << std::endl;
-          // Hier entsprechende Fehlerbehandlung einfügen
-        }
+    for (unsigned const location_idx_t : stop_sequence) {
+      nigiri::location_idx_t const stop_idx = nigiri::stop{location_idx_t}.location_idx();
+      stops.push_back(timetable.locations_.get(nigiri::location_idx_t(stop_idx)));
     }
-    
     return stops;
 }
 
