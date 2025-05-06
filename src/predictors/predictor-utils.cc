@@ -7,7 +7,7 @@
  * @param trip_id to convert
  * @return index of the trip
  */
-auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string const& trip_id) -> nigiri::trip_idx_t {
+auto predictorUtils::convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string const& trip_id) -> nigiri::trip_idx_t {
   // Iteriere durch trip_id_strings_ mit korrektem Indextyp
   for (std::size_t i = 0; i < timetable.trip_id_strings_.size(); ++i) {
     if (timetable.trip_id_strings_[nigiri::trip_id_idx_t{static_cast<unsigned>(i)}].view() == trip_id) {
@@ -28,7 +28,7 @@ auto convert_trip_id_to_idx(nigiri::timetable const& timetable, std::string cons
  * @param trip_id of the trip the stops belong to
  * @return all stops that belong to a route of a trip
  */
-std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timetable,
+std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetable const& timetable,
                                                 std::string const& trip_id) {
     std::cerr << "Suche Trip-ID: " << trip_id << std::endl;
 
@@ -37,7 +37,7 @@ std::vector<nigiri::location> get_stops_for_trip(nigiri::timetable const& timeta
         trip_idx = convert_trip_id_to_idx(timetable, trip_id);
     } catch (const std::runtime_error& e) {
         std::cerr << "Fehler: " << e.what() << std::endl;
-        return std::vector<nigiri::location>();
+        return {};
     }
 
     std::cerr << "Gefundener Trip-Index: " << trip_idx << std::endl;
