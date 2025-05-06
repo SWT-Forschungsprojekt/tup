@@ -14,8 +14,8 @@ GTFSPositionTracker::GTFSPositionTracker() = default;
  * This checks if any of the vehicle Positions is close to a stop. If so,
  * a tripUpdate for the according trip and stop will be created.
  *
- * @param tripUpdates current tripUpdate feed to be updated
- * @param vehiclePositions positions of vehicles as feed
+ * @param outputFeed current tripUpdate feed to be updated
+ * @param vehiclePositionFeed positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void GTFSPositionTracker::predict(
@@ -85,4 +85,4 @@ void GTFSPositionTracker::predict(
           }
         }
       }
-    }};
+    }}
