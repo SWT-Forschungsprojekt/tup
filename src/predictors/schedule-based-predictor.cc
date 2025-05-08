@@ -99,10 +99,12 @@ void ScheduleBasedPredictor::predict(
         // Hier haben wir:
         // 1. Die zwei relevanten Haltestellen: 
         //    stops[closest_segment_start] und stops[closest_segment_start + 1]
-        // 2. Den Lotfußpunkt (closest_foot_point) mit:
-        double foot_point_lon = boost::geometry::get<0>(closest_foot_point);
-        double foot_point_lat = boost::geometry::get<1>(closest_foot_point);
+        // 2. Den Lotfußpunkt (closest_foot_point) mit
         
-        // Weitere Verarbeitung hier …
+      double progress = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
+        boost::geometry::distance(stops[closest_segment_start], stops[closest_segment_start + 1], boost::geometry::strategy::distance::haversine(6371000.0));
+
+      // TODO: Time needed for the segment = Ankunftszeit B - Abfahrtszeit A
+
     }
 }
