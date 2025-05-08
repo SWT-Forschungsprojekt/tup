@@ -53,18 +53,18 @@ void GTFSPositionTracker::predict(
           bool tripUpdateExists = false;
           transit_realtime::TripUpdate* tripUpdateToUpdate;
           bool stopTimeUpdateExists = false;
-          transit_realtime::TripUpdate_StopTimeEvent* depatureToUpdate;
+          transit_realtime::TripUpdate_StopTimeEvent* departureToUpdate;
 
           for (int i = 0; i < outputFeed.entity_size(); ++i) {
             const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
             if (outputFeedEntity.has_trip_update() && outputFeedEntity.trip_update().trip().trip_id() == tripID) {
               tripUpdateExists = true;
               tripUpdateToUpdate = outputFeed.mutable_entity(i)->mutable_trip_update();
-                for (int j = 0; j < outputFeedEntity.trip_update().stop_time_update_size(); ++j) {
+              for (int j = 0; j < outputFeedEntity.trip_update().stop_time_update_size(); ++j) {
                 const transit_realtime::TripUpdate_StopTimeUpdate& update = outputFeedEntity.trip_update().stop_time_update(j);
                 if (update.stop_id() == location.id_) {
                   stopTimeUpdateExists = true;
-                  depatureToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_departure();
+                  departureToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_departure();
                   break;
                 }
               }
@@ -88,16 +88,27 @@ void GTFSPositionTracker::predict(
           if (!stopTimeUpdateExists){
             transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
             stop_time_update->set_stop_id(location.id_);
-            depatureToUpdate = stop_time_update->mutable_departure();
+            departureToUpdate = stop_time_update->mutable_departure();
           }
           
           tripUpdateToUpdate->set_timestamp(current_time);
-          depatureToUpdate->set_time(std::max(current_time, depatureToUpdate->time()));
+          departureToUpdate->set_time(std::max(current_time, departureToUpdate->time()));
         }
       }
     }
   }
   
+  // Remove TripUpdates for trips not in vehiclePositions anymore
+  for (int i = outputFeed.entity_size() - 1; i >= 0; --i) {
+    const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
+    if (outputFeedEntity.has_trip_update()) {
+      const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
+      if (currentTripIDs.find(tripUpdate.trip().trip_id()) == currentTripIDs.end()) {
+        outputFeed.mutable_entity()->DeleteSubrange(i, 1);
+      }
+    }
+  }
+
   transit_realtime::FeedHeader* header = outputFeed.mutable_header();
   header->set_timestamp(time(nullptr));
 }
