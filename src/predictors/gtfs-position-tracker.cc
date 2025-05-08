@@ -22,12 +22,18 @@ void GTFSPositionTracker::predict(
     transit_realtime::FeedMessage& outputFeed,
     const transit_realtime::FeedMessage& vehiclePositionFeed,
     const nigiri::timetable& timetable) {
+  
+  //Save all current tripIds in vehiclePositions
+  std::unordered_set<std::string> currentTripIDs = {};
+
   for (const transit_realtime::FeedEntity& entity : vehiclePositionFeed.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
       const transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
       // Get Trip ID
       std::string tripID = vehicle_position.trip().trip_id();
+      currentTripIDs.insert(tripID);
+
       std::string routeID = vehicle_position.trip().route_id();
       std::string vehicleID = vehicle_position.vehicle().id();
 
