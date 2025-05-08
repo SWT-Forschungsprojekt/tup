@@ -28,7 +28,9 @@ void GTFSPositionTracker::predict(
       const transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
       // Get Trip ID
       std::string tripID = vehicle_position.trip().trip_id();
-      
+      std::string routeID = vehicle_position.trip().route_id();
+      std::string vehicleID = vehicle_position.vehicle().id();
+
       // Get a stop list for a given trip
       std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
       // check for each stop if we are close
@@ -77,7 +79,10 @@ void GTFSPositionTracker::predict(
             new_entity->set_id(tripID);
 
             tripUpdateToUpdate = new_entity->mutable_trip_update();
-            tripUpdateToUpdate->mutable_trip()->set_trip_id(tripID);
+            transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
+            trip->set_trip_id(tripID);
+            trip->set_route_id(routeID);
+            tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
           }
 
           if (!stopTimeUpdateExists){
