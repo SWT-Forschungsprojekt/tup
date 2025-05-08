@@ -14,7 +14,7 @@ using Segment = boost::geometry::model::segment<Point>;
 
 Point calculateFootPoint(const Point& vehicle_point, const Point& stop1_point, const Point& stop2_point) {
     // Erstelle ein Segment aus den zwei Haltestellen
-    Segment stop_segment(stop1_point, stop2_point);
+  const Segment stop_segment(stop1_point, stop2_point);
     
     // Erstelle einen Punkt für das Ergebnis
     Point foot_point;
@@ -33,15 +33,15 @@ ScheduleBasedPredictor::ScheduleBasedPredictor() = default;
  * is too late. If so, it interpolates how much time the vehicle will be too
  * late at the next stop
  * @param outputFeed current tripUpdate feed to be updated
- * @param vehiclePositionFeed positions of vehicles as feed
+ * @param vehiclePositions positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void ScheduleBasedPredictor::predict(
     transit_realtime::FeedMessage& outputFeed,
-    const transit_realtime::FeedMessage& vehiclePositionFeed,
+    const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
     
-    for (const transit_realtime::FeedEntity& entity : vehiclePositionFeed.entity()) {
+    for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
         if (!entity.has_vehicle()) {
             continue;
         }
@@ -83,10 +83,10 @@ void ScheduleBasedPredictor::predict(
             Point foot_point = calculateFootPoint(vehicle_point, stop1_point, stop2_point);
 
             // Berechne Distanz zum Lotfußpunkt
-            double distance = boost::geometry::distance(
+            const double distance = boost::geometry::distance(
                 vehicle_point, 
                 foot_point,
-                boost::geometry::strategy::distance::haversine<double>(6371000.0)  // Erdradius in Metern
+                boost::geometry::strategy::distance::haversine(6371000.0)  // Erdradius in Metern
             );
 
             if (distance < min_segment_distance) {
@@ -101,10 +101,13 @@ void ScheduleBasedPredictor::predict(
         //    stops[closest_segment_start] und stops[closest_segment_start + 1]
         // 2. Den Lotfußpunkt (closest_foot_point) mit
         
-      double progress = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
+      double progress_way = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
         boost::geometry::distance(stops[closest_segment_start], stops[closest_segment_start + 1], boost::geometry::strategy::distance::haversine(6371000.0));
-
+      // TODO: progress_time: current_time - a.departure_time / b.arrival_time - a.departure_time
+      // TODO: too_late = progress_time > progress_way
+      // TODO: if too_late
       // TODO: Time needed for the segment = Ankunftszeit B - Abfahrtszeit A
-
+      // TODO: Calculate predicted arrival: current_time + progress_time * (1 / progress_way)
+      // TODO: Update feed accordingly
     }
 }
