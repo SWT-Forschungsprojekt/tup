@@ -107,9 +107,14 @@ void ScheduleBasedPredictor::predict(
                 closest_foot_point = foot_point;
             }
         }
-        
-      double progress_way = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
-        boost::geometry::distance(stops[closest_segment_start], stops[closest_segment_start + 1], boost::geometry::strategy::distance::haversine(6371000.0));
+      Point segment_start, segment_end;
+      boost::geometry::set<0>(segment_start, stops[closest_segment_start].pos_.lng_);
+      boost::geometry::set<1>(segment_start, stops[closest_segment_start].pos_.lat_);
+      boost::geometry::set<0>(segment_end, stops[closest_segment_start + 1].pos_.lng_);
+      boost::geometry::set<1>(segment_end,
+                              stops[closest_segment_start + 1].pos_.lat_);
+      const double progress_way = boost::geometry::distance(segment_start, closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
+        boost::geometry::distance(segment_start, segment_end, boost::geometry::strategy::distance::haversine(6371000.0));
       // progress_time: (current_time - a.departure_time) / (b.arrival_time - a.departure_time)
       auto now = std::chrono::system_clock::now();
       const auto current_time =
