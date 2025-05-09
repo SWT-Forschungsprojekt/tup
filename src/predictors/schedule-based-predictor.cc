@@ -143,7 +143,41 @@ void ScheduleBasedPredictor::predict(
         auto time_needed = arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count();
         // Calculate predicted arrival: current_time + progress_time * (1 / progress_way)
         auto predicted_arrival = current_time + static_cast<int>(progress_time * (1 / progress_way));
-        // TODO: Update feed accordingly
+        // Update feed accordingly
+        transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
+        bool tripUpdateExists = false;
+
+        for (const transit_realtime::FeedEntity& outputFeedEntity : outputFeed.entity()) {
+          if (outputFeedEntity.has_trip_update() &&
+              outputFeedEntity.trip_update().trip().trip_id() == tripID) {
+            for (const transit_realtime::TripUpdate_StopTimeUpdate& update : outputFeedEntity.trip_update().stop_time_update()) {
+              if (update.stop_id() == stops[closest_segment_start + 1].id_) {
+                tripUpdateExists = true;
+                stopTimeUpdate = update;
+                break;
+              }
+            }
+              }
+        }
+
+        auto now = std::chrono::system_clock::now();
+        auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+
+        if (tripUpdateExists) {
+          stopTimeUpdate.mutable_departure()->set_time(std::max(current_time, stopTimeUpdate.departure().time()));
+        } else {
+          transit_realtime::FeedEntity* new_entity = outputFeed.add_entity();
+          new_entity->set_id(tripID);
+
+          transit_realtime::TripUpdate* trip_update = new_entity->mutable_trip_update();
+          trip_update->mutable_trip()->set_trip_id(tripID);
+
+          transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = trip_update->add_stop_time_update();
+          stop_time_update->set_stop_id(stops[closest_segment_start + 1].id_);
+          stop_time_update->mutable_departure()->set_time(current_time);
+
+          std::cerr << "Create trip update" << timetable.locations_.ids_.size() << std::endl;
+        }
 
       }
     }
