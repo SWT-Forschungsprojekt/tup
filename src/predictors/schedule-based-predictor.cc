@@ -104,7 +104,7 @@ void ScheduleBasedPredictor::predict(
         
       double progress_way = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
         boost::geometry::distance(stops[closest_segment_start], stops[closest_segment_start + 1], boost::geometry::strategy::distance::haversine(6371000.0));
-      // TODO: progress_time: (current_time - a.departure_time) / (b.arrival_time - a.departure_time)
+      // progress_time: (current_time - a.departure_time) / (b.arrival_time - a.departure_time)
       auto now = std::chrono::system_clock::now();
       const auto current_time =
           std::chrono::duration_cast<std::chrono::seconds>(
@@ -129,20 +129,22 @@ void ScheduleBasedPredictor::predict(
           nigiri::event_type::kDep
       );
       auto arrival_time = timetable.event_time(
-                nigiri::transport{
-                    t_idx,
-                    current_day_idx
-                },
-                // Konvertierung von zu : `location_idx_t``stop_idx_t`
-                nigiri::stop_idx_t{static_cast<unsigned short int>(
-                    static_cast<unsigned>(closest_segment_start + 1))}, // Direkter Index
-                nigiri::event_type::kDep
-            );
-      auto progress_time = (current_time - departure_time.time_since_epoch().count()) / (arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count());
-      // TODO: too_late = progress_time > progress_way
-      // TODO: if too_late
-      // TODO: Time needed for the segment = Ankunftszeit B - Abfahrtszeit A
-      // TODO: Calculate predicted arrival: current_time + progress_time * (1 / progress_way)
-      // TODO: Update feed accordingly
+          nigiri::transport{t_idx, current_day_idx},
+          // Konvertierung von zu : `location_idx_t``stop_idx_t`
+          nigiri::stop_idx_t{
+              static_cast<unsigned short int>(static_cast<unsigned>(
+                  closest_segment_start + 1))},  // Direkter Index
+          nigiri::event_type::kDep);
+      const auto progress_time = (current_time - departure_time.time_since_epoch().count()) / (arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count());
+      // too_late = progress_time > progress_way
+      auto too_late = progress_time > progress_way;
+      if (too_late) {
+        // Time needed for the segment = Ankunftszeit B - Abfahrtszeit A
+        auto time_needed = arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count();
+        // Calculate predicted arrival: current_time + progress_time * (1 / progress_way)
+        auto predicted_arrival = current_time + static_cast<int>(progress_time * (1 / progress_way));
+        // TODO: Update feed accordingly
+
+      }
     }
 }
