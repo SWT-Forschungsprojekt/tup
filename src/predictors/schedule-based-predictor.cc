@@ -8,18 +8,29 @@
 #include <boost/geometry/geometries/segment.hpp>
 #include <boost/geometry/strategies/spherical/distance_haversine.hpp>
 
-// Typdeklarationen für bessere Lesbarkeit
+// central type declarations
 using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::spherical_equatorial<boost::geometry::degree>>;
 using Segment = boost::geometry::model::segment<Point>;
 
+/**
+ * Calculates the foot (nearest) point on a segment defined by two stops to a
+ * given vehicle point. This function determines the point on the segment
+ * closest to the provided vehicle position, commonly used for determining
+ * vehicle alignment on a route.
+ *
+ * @param vehicle_point the point representing the current vehicle position.
+ * @param stop1_point the point representing the first stop of the segment.
+ * @param stop2_point the point representing the second stop of the segment.
+ * @return the nearest point on the segment to the vehicle point.
+ */
 Point calculateFootPoint(const Point& vehicle_point, const Point& stop1_point, const Point& stop2_point) {
-    // Erstelle ein Segment aus den zwei Haltestellen
-  const Segment stop_segment(stop1_point, stop2_point);
+    // create a segment from to stops
+    const Segment stop_segment(stop1_point, stop2_point);
     
-    // Erstelle einen Punkt für das Ergebnis
+    // create the resulting point
     Point foot_point;
     
-    // Berechne den nächsten Punkt auf dem Segment
+    // calculate the foot nearest point on the segment
     boost::geometry::closest_points(stop_segment, vehicle_point, foot_point);
     
     return foot_point;
