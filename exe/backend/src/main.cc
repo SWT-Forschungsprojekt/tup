@@ -10,8 +10,10 @@
 
 #include "http_server.h"
 #include "feed_updater.h"
+
 #include "predictors/simple-predictor.h"
 #include "predictors/gtfs-position-tracker.h"
+#include "predictors/schedule-based-predictor.h"
 
 #include <vector>
 
@@ -63,7 +65,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 }
 
 int main(int argc, char const* argv[]) {
-  std::cout << "Hello, World!" << std::endl;
 
   auto const progress_tracker = utl::activate_progress_tracker("importer");
   auto const silencer = utl::global_progress_bars{true};
@@ -132,7 +133,7 @@ int main(int argc, char const* argv[]) {
        bpo::value(&finalize_opt.adjust_footpaths_)
            ->default_value(finalize_opt.adjust_footpaths_),
        "adjust footpath lengths")  //
-      ("max_foopath_length",
+      ("max_footpath_length",
        bpo::value(&finalize_opt.max_footpath_length_)
            ->default_value(finalize_opt.max_footpath_length_))  //
       ("assistance_times", bpo::value(&assistance_path))  //
@@ -204,6 +205,10 @@ int main(int argc, char const* argv[]) {
   if (predictor == "gtfs-position-tracker") {
     method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
       GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
+    };
+  } else if (predictor == "schedule-based") {
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
+      ScheduleBasedPredictor::predict(tripUpdatesFeed, vehiclePositions, timetable);
     };
   } else if (predictor == "dummy") {
     method = [&](transit_realtime::FeedMessage& vehiclePositions) {
