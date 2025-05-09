@@ -44,12 +44,12 @@ ScheduleBasedPredictor::ScheduleBasedPredictor() = default;
  * This checks where the vehicle currently is in the schedule and checks if it
  * is too late. If so, it interpolates how much time the vehicle will be too
  * late at the next stop
- * @param outputFeed current tripUpdate feed to be updated
+ * @param tripUpdates current tripUpdate feed to be updated
  * @param vehiclePositions positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void ScheduleBasedPredictor::predict(
-    transit_realtime::FeedMessage& outputFeed,
+    transit_realtime::FeedMessage& tripUpdates,
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
     
@@ -154,7 +154,7 @@ void ScheduleBasedPredictor::predict(
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
         bool tripUpdateExists = false;
 
-        for (const transit_realtime::FeedEntity& outputFeedEntity : outputFeed.entity()) {
+        for (const transit_realtime::FeedEntity& outputFeedEntity : tripUpdates.entity()) {
           if (outputFeedEntity.has_trip_update() &&
               outputFeedEntity.trip_update().trip().trip_id() == tripID) {
             for (const transit_realtime::TripUpdate_StopTimeUpdate& update : outputFeedEntity.trip_update().stop_time_update()) {
@@ -170,7 +170,7 @@ void ScheduleBasedPredictor::predict(
         if (tripUpdateExists) {
           stopTimeUpdate.mutable_arrival()->set_time(predicted_arrival);
         } else {
-          transit_realtime::FeedEntity* new_entity = outputFeed.add_entity();
+          transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
           new_entity->set_id(tripID);
 
           transit_realtime::TripUpdate* trip_update = new_entity->mutable_trip_update();
