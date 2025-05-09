@@ -1,5 +1,8 @@
 #include "predictors/schedule-based-predictor.h"
 #include <nigiri/timetable.h>
+
+#include <boost/chrono/time_point.hpp>
+
 #include "predictors/predictor-utils.h"
 
 #include <boost/geometry/algorithms/closest_points.hpp>
@@ -58,7 +61,7 @@ void ScheduleBasedPredictor::predict(
             continue;
         }
 
-        const auto& vehicle_position = entity.vehicle();
+        const  transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
         if (!vehicle_position.has_trip() || !vehicle_position.has_position()) {
             continue;
         }
@@ -69,7 +72,7 @@ void ScheduleBasedPredictor::predict(
         boost::geometry::set<1>(vehicle_point, vehicle_position.position().latitude());
 
         const std::string& tripID = vehicle_position.trip().trip_id();
-        const auto& stops = predictorUtils::get_stops_for_trip(timetable, tripID);
+        const std::vector<nigiri::location>& stops = predictorUtils::get_stops_for_trip(timetable, tripID);
         
         if (stops.size() < 2) {
             continue;
@@ -81,8 +84,8 @@ void ScheduleBasedPredictor::predict(
         Point closest_foot_point;
 
         for (size_t i = 0; i < stops.size() - 1; ++i) {
-            const auto& current_stop = stops[i];
-            const auto& next_stop = stops[i + 1];
+            const nigiri::location& current_stop = stops[i];
+            const nigiri::location& next_stop = stops[i + 1];
 
             // Create points for the two stops
             Point stop1_point, stop2_point;
@@ -116,18 +119,18 @@ void ScheduleBasedPredictor::predict(
       const double progress_way = boost::geometry::distance(segment_start, closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
         boost::geometry::distance(segment_start, segment_end, boost::geometry::strategy::distance::haversine(6371000.0));
       // progress_time: (current_time - a.departure_time) / (b.arrival_time - a.departure_time)
-      auto now = std::chrono::system_clock::now();
-      const auto current_time =
+      std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+      const long current_time =
           std::chrono::duration_cast<std::chrono::seconds>(
               now.time_since_epoch())
               .count();
-      const auto trip_idx = predictorUtils::convert_trip_id_to_idx(timetable, tripID);
-      const auto& transport_ranges = timetable.trip_transport_ranges_;
-      const auto t_idx = transport_ranges[trip_idx][0].first; // Beachten Sie .from statt .from_
+      const  nigiri::trip_idx_t trip_idx = predictorUtils::convert_trip_id_to_idx(timetable, tripID);
+      const nigiri::paged_vecvec<cista::strong<unsigned, nigiri::_trip_idx>, cista::pair<cista::strong<unsigned, nigiri::_transport_idx>, nigiri::interval<unsigned short>>>& transport_ranges = timetable.trip_transport_ranges_;
+      const cista::strong<unsigned, nigiri::_transport_idx> t_idx = transport_ranges[trip_idx][0].first; // Beachten Sie .from statt .from_
       // convert to sys_days
-      const auto today = date::floor<date::days>(now);
+      const  std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<int, std::ratio<86400>>> today = date::floor<date::days>(now);
       const nigiri::day_idx_t current_day_idx = timetable.day_idx(today);
-      auto departure_time = timetable.event_time(
+      nigiri::unixtime_t departure_time = timetable.event_time(
           nigiri::transport{
               t_idx,
               current_day_idx
@@ -137,7 +140,7 @@ void ScheduleBasedPredictor::predict(
               static_cast<unsigned>(closest_segment_start))},
           nigiri::event_type::kDep
       );
-      auto arrival_time = timetable.event_time(
+      nigiri::unixtime_t arrival_time = timetable.event_time(
           nigiri::transport{t_idx, current_day_idx},
           // Convert from `location_idx_t` to `stop_idx_t`
           nigiri::stop_idx_t{
@@ -149,7 +152,7 @@ void ScheduleBasedPredictor::predict(
       if (progress_time > progress_way) {
         // Calculate predicted arrival: current_time + progress_time * (1 /
         // progress_way)
-        const auto predicted_arrival = current_time + static_cast<int>(progress_time * (1 / progress_way));
+        const long predicted_arrival = current_time + static_cast<int>(progress_time * (1 / progress_way));
         // Update the feed accordingly
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
         bool tripUpdateExists = false;
