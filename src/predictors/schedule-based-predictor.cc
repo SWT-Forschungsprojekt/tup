@@ -27,13 +27,14 @@ Point calculateFootPoint(const Point& vehicle_point, const Point& stop1_point, c
     // create a segment from to stops
     const Segment stop_segment(stop1_point, stop2_point);
     
-    // create the resulting point
-    Point foot_point;
+    // Create a segment for the result
+    Segment result_segment;
     
-    // calculate the foot nearest point on the segment
-    boost::geometry::closest_points(stop_segment, vehicle_point, foot_point);
+    // Closest-Point on a segment
+    boost::geometry::closest_points(stop_segment, vehicle_point, result_segment);
     
-    return foot_point;
+    // return the first point of a segment
+    return result_segment.first;
 }
 
 ScheduleBasedPredictor::ScheduleBasedPredictor() = default;
