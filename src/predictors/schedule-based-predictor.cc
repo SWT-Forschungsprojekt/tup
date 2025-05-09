@@ -56,6 +56,7 @@ void ScheduleBasedPredictor::predict(
         boost::geometry::set<0>(vehicle_point, vehicle_position.position().longitude());
         boost::geometry::set<1>(vehicle_point, vehicle_position.position().latitude());
 
+        // Zuerst die transport_idx_t aus der tripID erhalten
         const std::string& tripID = vehicle_position.trip().trip_id();
         const auto& stops = predictorUtils::get_stops_for_trip(timetable, tripID);
         
@@ -103,7 +104,41 @@ void ScheduleBasedPredictor::predict(
         
       double progress_way = boost::geometry::distance(stops[closest_segment_start], closest_foot_point, boost::geometry::strategy::distance::haversine(6371000.0)) /
         boost::geometry::distance(stops[closest_segment_start], stops[closest_segment_start + 1], boost::geometry::strategy::distance::haversine(6371000.0));
-      // TODO: progress_time: current_time - a.departure_time / b.arrival_time - a.departure_time
+      // TODO: progress_time: (current_time - a.departure_time) / (b.arrival_time - a.departure_time)
+      auto now = std::chrono::system_clock::now();
+      const auto current_time =
+          std::chrono::duration_cast<std::chrono::seconds>(
+              now.time_since_epoch())
+              .count();
+      const auto trip_idx = predictorUtils::convert_trip_id_to_idx(timetable, tripID);
+      const auto& transport_ranges = timetable.trip_transport_ranges_;
+      const auto t_idx = transport_ranges[trip_idx][0].first; // Beachten Sie .from statt .from_
+      // Konvertiere zu sys_days
+      const auto today = date::floor<date::days>(now);
+      // Hole day_idx
+      const nigiri::day_idx_t current_day_idx = timetable.day_idx(today);
+      // In Zeile 109, nach der Berechnung von closest_segment_start:
+      auto departure_time = timetable.event_time(
+          nigiri::transport{
+              t_idx,
+              current_day_idx
+          },
+          // Konvertierung von zu : `location_idx_t``stop_idx_t`
+          nigiri::stop_idx_t{static_cast<unsigned short int>(
+              static_cast<unsigned>(closest_segment_start))}, // Direkter Index
+          nigiri::event_type::kDep
+      );
+      auto arrival_time = timetable.event_time(
+                nigiri::transport{
+                    t_idx,
+                    current_day_idx
+                },
+                // Konvertierung von zu : `location_idx_t``stop_idx_t`
+                nigiri::stop_idx_t{static_cast<unsigned short int>(
+                    static_cast<unsigned>(closest_segment_start + 1))}, // Direkter Index
+                nigiri::event_type::kDep
+            );
+      auto progress_time = (current_time - departure_time.time_since_epoch().count()) / (arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count());
       // TODO: too_late = progress_time > progress_way
       // TODO: if too_late
       // TODO: Time needed for the segment = Ankunftszeit B - Abfahrtszeit A
