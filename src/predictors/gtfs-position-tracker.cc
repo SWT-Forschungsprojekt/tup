@@ -104,6 +104,17 @@ void GTFSPositionTracker::predict(
     }
   }
   
+  // Remove TripUpdates for trips not in vehiclePositions anymore
+  for (int i = outputFeed.entity_size() - 1; i >= 0; --i) {
+    const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
+    if (outputFeedEntity.has_trip_update()) {
+      const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
+      if (currentTripIDs.find(tripUpdate.trip().trip_id()) == currentTripIDs.end()) {
+        outputFeed.mutable_entity()->DeleteSubrange(i, 1);
+      }
+    }
+  }
+
   transit_realtime::FeedHeader* header = outputFeed.mutable_header();
   header->set_timestamp(time(nullptr));
 }
