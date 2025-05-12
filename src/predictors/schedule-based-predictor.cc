@@ -200,4 +200,7 @@ void ScheduleBasedPredictor::predict(
 
       }
     }
+
+    transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
+    header->set_timestamp(time(nullptr));
 }
