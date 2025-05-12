@@ -128,7 +128,7 @@ void ScheduleBasedPredictor::predict(
               .count();
       const  nigiri::trip_idx_t trip_idx = predictorUtils::convert_trip_id_to_idx(timetable, tripID);
       const nigiri::paged_vecvec<cista::strong<unsigned, nigiri::_trip_idx>, cista::pair<cista::strong<unsigned, nigiri::_transport_idx>, nigiri::interval<unsigned short>>>& transport_ranges = timetable.trip_transport_ranges_;
-      const cista::strong<unsigned, nigiri::_transport_idx> t_idx = transport_ranges[trip_idx][0].first; // Beachten Sie .from statt .from_
+      const cista::strong<unsigned, nigiri::_transport_idx> t_idx = transport_ranges[trip_idx][0].first;
       // convert to sys_days
       const  std::chrono::time_point<std::chrono::system_clock, std::chrono::duration<int, std::ratio<86400>>> today = date::floor<date::days>(now);
       const nigiri::day_idx_t current_day_idx = timetable.day_idx(today);
@@ -152,10 +152,9 @@ void ScheduleBasedPredictor::predict(
       const double time_since_last_stop = static_cast<double>(current_time - departure_time.time_since_epoch().count());
       const double next_stop_arrival_time = arrival_time.time_since_epoch().count();
       const double progress_time = time_since_last_stop / next_stop_arrival_time;
-      // too_late = progress_time > progress_way
+      // too_late if progress_time > progress_way
       if (progress_time > progress_way) {
-        // Calculate predicted arrival: current_time + progress_time * (1 /
-        // progress_way)
+        // Calculate predicted arrival: current_time + time needed for the segment * (1 - progress_way)
         const long predicted_arrival = current_time + static_cast<int>((next_stop_arrival_time - departure_time.time_since_epoch().count()) * (1 - progress_way));
         // Update the feed accordingly
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
