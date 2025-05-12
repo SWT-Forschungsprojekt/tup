@@ -154,7 +154,7 @@ void ScheduleBasedPredictor::predict(
       if (progress_time > progress_way) {
         // Calculate predicted arrival: current_time + progress_time * (1 /
         // progress_way)
-        const long predicted_arrival = current_time + static_cast<int>(progress_time * (1 / progress_way));
+        const long predicted_arrival = current_time + static_cast<int>((arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count()) * (1 - progress_way));
         // Update the feed accordingly
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
         bool tripUpdateExists = false;
