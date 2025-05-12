@@ -71,7 +71,9 @@ void ScheduleBasedPredictor::predict(
         boost::geometry::set<0>(vehicle_point, vehicle_position.position().longitude());
         boost::geometry::set<1>(vehicle_point, vehicle_position.position().latitude());
 
-        const std::string& tripID = vehicle_position.trip().trip_id();
+        std::string tripID = vehicle_position.trip().trip_id();
+        std::string routeID = vehicle_position.trip().route_id();
+        std::string vehicleID = vehicle_position.vehicle().id();
         const std::vector<nigiri::location>& stops = predictorUtils::get_stops_for_trip(timetable, tripID);
         
         if (stops.size() < 2) {
@@ -156,35 +158,45 @@ void ScheduleBasedPredictor::predict(
         // Update the feed accordingly
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
         bool tripUpdateExists = false;
+        transit_realtime::TripUpdate* tripUpdateToUpdate;
+        bool stopTimeUpdateExists = false;
+        transit_realtime::TripUpdate_StopTimeEvent* arrivalToUpdate;
 
-        for (const transit_realtime::FeedEntity& outputFeedEntity : tripUpdates.entity()) {
-          if (outputFeedEntity.has_trip_update() &&
-              outputFeedEntity.trip_update().trip().trip_id() == tripID) {
-            for (const transit_realtime::TripUpdate_StopTimeUpdate& update : outputFeedEntity.trip_update().stop_time_update()) {
+        for (int i = 0; i < tripUpdates.entity_size(); ++i) {
+          const transit_realtime::FeedEntity& outputFeedEntity = tripUpdates.entity(i);
+          if (outputFeedEntity.has_trip_update() && outputFeedEntity.trip_update().trip().trip_id() == tripID) {
+            tripUpdateExists = true;
+            tripUpdateToUpdate = tripUpdates.mutable_entity(i)->mutable_trip_update();
+            for (int j = 0; j < outputFeedEntity.trip_update().stop_time_update_size(); ++j) {
+              const transit_realtime::TripUpdate_StopTimeUpdate& update = outputFeedEntity.trip_update().stop_time_update(j);
               if (update.stop_id() == stops[closest_segment_start + 1].id_) {
-                tripUpdateExists = true;
-                stopTimeUpdate = update;
+                stopTimeUpdateExists = true;
+                arrivalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
                 break;
               }
             }
-              }
+          }
         }
 
-        if (tripUpdateExists) {
-          stopTimeUpdate.mutable_arrival()->set_time(predicted_arrival);
-        } else {
+        if (!tripUpdateExists){
           transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
           new_entity->set_id(tripID);
 
-          transit_realtime::TripUpdate* trip_update = new_entity->mutable_trip_update();
-          trip_update->mutable_trip()->set_trip_id(tripID);
-
-          transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = trip_update->add_stop_time_update();
-          stop_time_update->set_stop_id(stops[closest_segment_start + 1].id_);
-          stop_time_update->mutable_arrival()->set_time(predicted_arrival);
-
-          std::cerr << "Create trip update" << timetable.locations_.ids_.size() << std::endl;
+          tripUpdateToUpdate = new_entity->mutable_trip_update();
+          transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
+          trip->set_trip_id(tripID);
+          trip->set_route_id(routeID);
+          tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
         }
+
+        if (!stopTimeUpdateExists){
+          transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
+          stop_time_update->set_stop_id(stops[closest_segment_start + 1].id_);
+          arrivalToUpdate = stop_time_update->mutable_departure();
+        }
+
+        tripUpdateToUpdate->set_timestamp(current_time);
+        arrivalToUpdate->set_time(predicted_arrival);
 
       }
     }
