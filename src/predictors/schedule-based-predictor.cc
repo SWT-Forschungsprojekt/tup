@@ -149,12 +149,14 @@ void ScheduleBasedPredictor::predict(
               static_cast<unsigned short int>(static_cast<unsigned>(
                   closest_segment_start + 1))},
           nigiri::event_type::kDep);
-      const double progress_time = (current_time - departure_time.time_since_epoch().count()) / (arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count());
+      const double time_since_last_stop = static_cast<double>(current_time - departure_time.time_since_epoch().count());
+      const double next_stop_arrival_time = arrival_time.time_since_epoch().count();
+      const double progress_time = time_since_last_stop / next_stop_arrival_time;
       // too_late = progress_time > progress_way
       if (progress_time > progress_way) {
         // Calculate predicted arrival: current_time + progress_time * (1 /
         // progress_way)
-        const long predicted_arrival = current_time + static_cast<int>((arrival_time.time_since_epoch().count() - departure_time.time_since_epoch().count()) * (1 - progress_way));
+        const long predicted_arrival = current_time + static_cast<int>((next_stop_arrival_time - departure_time.time_since_epoch().count()) * (1 - progress_way));
         // Update the feed accordingly
         transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
         bool tripUpdateExists = false;
