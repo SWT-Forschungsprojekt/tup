@@ -63,3 +63,16 @@ std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetab
     }
     return stops;
 }
+
+void predictorUtils::deleteOldTripUpdates(std::unordered_set<std::string> currentTripIDs, transit_realtime::FeedMessage& outputFeed) {
+  // Remove TripUpdates for trips not in vehiclePositions anymore
+  for (int i = outputFeed.entity_size() - 1; i >= 0; --i) {
+    const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
+    if (outputFeedEntity.has_trip_update()) {
+      const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
+      if (currentTripIDs.find(tripUpdate.trip().trip_id()) == currentTripIDs.end()) {
+        outputFeed.mutable_entity()->DeleteSubrange(i, 1);
+      }
+    }
+  }
+}
