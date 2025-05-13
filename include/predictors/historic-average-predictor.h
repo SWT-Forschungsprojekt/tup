@@ -21,6 +21,6 @@ public:
   void predict(transit_realtime::FeedMessage& tripUpdates, 
               const transit_realtime::FeedMessage& vehiclePositions,
               const nigiri::timetable& timetable);
-  void loadHistoricData(std::vector<stopTime> stopTimes);
+  void loadHistoricData(const std::vector<stopTime>* stopTimes);
   stopTimeStore store_;
 };

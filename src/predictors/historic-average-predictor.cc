@@ -18,7 +18,6 @@ void HistoricAveragePredictor::predict(
     transit_realtime::FeedMessage& tripUpdates,
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
-  // TODO: Implement HistoricAveragePredictor
   // Part 1: Storing of departures based on GTFS-Position-Tracker
   for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
@@ -112,7 +111,7 @@ void HistoricAveragePredictor::predict(
  * Helping method to load historic data from protobuf files
  * @param stopTimes vector of stopTimes to load
  */
-void HistoricAveragePredictor::loadHistoricData(std::vector<stopTime> stopTimes) {
+void HistoricAveragePredictor::loadHistoricData(const std::vector<stopTime>* stopTimes) {
   for (auto stopTime : stopTimes) {
     this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, stopTime.departure_time, this->store_);
   }
