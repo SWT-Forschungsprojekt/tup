@@ -12,6 +12,9 @@
 
 using stop_time_idx_t = cista::strong<std::uint32_t, struct stoptime_idx>;
 
+/**
+ * An Event when a vehicle of a trip arrives or ends at a stop
+ */
 struct stopTime {
   stop_time_idx_t idx;
   std::string trip_id;
@@ -24,6 +27,9 @@ template <typename T>
 using mm_vec = cista::basic_mmap_vec<T, std::uint64_t>;
 
 template <typename Key, typename T>
+/**
+ * Helper to deal with the memory-mapped paged double vector
+ */
 struct mm_paged_vecvec_helper {
   using data_t =
       cista::paged<mm_vec<T>, std::uint64_t, std::uint32_t, 2U, 1U << 31U>;
@@ -34,7 +40,13 @@ struct mm_paged_vecvec_helper {
 template <typename Key, typename T>
 using mm_paged_vecvec = typename mm_paged_vecvec_helper<Key, T>::type;
 
+/**
+ * Stores historic stopTimes which are then used for prediction
+ */
 class stopTimeStore {
+  /**
+   * Create a stopTimeStore storing the memory-mapped files
+   */
   stopTimeStore(std::filesystem::path, cista::mmap::protection);
 public:
   cista::mmap mm(char const* file);
