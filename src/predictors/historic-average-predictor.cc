@@ -53,7 +53,8 @@ void HistoricAveragePredictor::predict(
     }
   }
   // Part 2: Prediction based on the stored departures/arrivals
-  // TODO: Empty output feed
+  // Empty output feed, as we generate all tripUpdates every time new
+  tripUpdates.Clear();
   for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
@@ -65,9 +66,25 @@ void HistoricAveragePredictor::predict(
 
       // Get a stop list for a given trip
       std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
-      // TODO: Check for each stop if we before or after the stop. Store the first one where we are before.
+      auto old_distance = std::numeric_limits<double>::max();
+      nigiri::location& prediction_stop = stop_list.back();
       for (nigiri::location location : stop_list) {
-        // TODO: if distance is smaller then before: continue, if it gets bigger again, take current stop
+        namespace bg = boost::geometry;
+        bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
+            vehicle_point{};
+        bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
+            location_point{};
+
+        bg::set<0>(vehicle_point, vehicle_position.position().longitude());
+        bg::set<1>(vehicle_point, vehicle_position.position().latitude());
+        bg::set<0>(location_point, location.pos_.lng_);
+        bg::set<1>(location_point, location.pos_.lat_);
+
+        double new_distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
+        if (old_distance > new_distance) {
+          prediction_stop = location;
+          break;
+        }
       }
       // TODO: Create prediction and add it to outputFeed
     }
