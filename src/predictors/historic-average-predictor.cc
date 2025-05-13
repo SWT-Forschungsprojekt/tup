@@ -86,7 +86,24 @@ void HistoricAveragePredictor::predict(
           break;
         }
       }
-      // TODO: Create prediction and add it to outputFeed
+      auto now = std::chrono::system_clock::now();
+      auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+      // Create a prediction and add it to outputFeed
+      transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
+      new_entity->set_id(tripID);
+
+      transit_realtime::TripUpdate* tripUpdateToUpdate = new_entity->mutable_trip_update();
+      transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
+      trip->set_trip_id(tripID);
+      trip->set_route_id(routeID);
+      tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
+
+      transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
+      stop_time_update->set_stop_id(prediction_stop.id_);
+      transit_realtime::TripUpdate_StopTimeEvent* departureToUpdate = stop_time_update->mutable_departure();
+
+      tripUpdateToUpdate->set_timestamp(current_time);
+      departureToUpdate->set_time(this->store_.getAverageArrivalTime(tripID, prediction_stop.id_.data(), this->store_));
     }
   }
 }
