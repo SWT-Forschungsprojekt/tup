@@ -49,5 +49,5 @@ public:
                     std::optional<int64_t> arrival_time,
                     std::optional<int64_t> departure_time,
                     stopTimeStore& storage);
-  static int64_t getAverageArrivalTime(std::string const& trip_id, std::string const& stop_id);
+  static int64_t getAverageArrivalTime(std::string const& trip_id, std::string const& stop_id, stopTimeStore& storage);
 };

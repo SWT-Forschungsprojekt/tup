@@ -31,3 +31,17 @@ void stopTimeStore::store(std::string const& trip_id,
     };
     storage.data_.emplace_back({new_stop_time});
 }
+
+int64_t stopTimeStore::getAverageArrivalTime(std::string const& trip_id, std::string const& stop_id, stopTimeStore& storage) {
+  int64_t sum = 0;
+  int64_t count = 0;
+  for (auto const& stoptime : storage.data_) {
+    if (stoptime.front().trip_id == trip_id && stoptime.front().stop_id == stop_id) {
+      if (stoptime.front().arrival_time.has_value()) {
+        sum += stoptime.front().arrival_time.value();
+        count++;
+      }
+    }
+  }
+  return sum / count;
+}
