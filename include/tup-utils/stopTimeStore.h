@@ -10,10 +10,10 @@
 #include <optional>
 #include <string>
 
-using stoptime_idx_t = cista::strong<std::uint32_t, struct _shape_idx>;
+using stop_time_idx_t = cista::strong<std::uint32_t, struct stoptime_idx>;
 
 struct stopTime {
-  stoptime_idx_t idx;
+  stop_time_idx_t idx;
   std::string trip_id;
   std::string stop_id;
   std::optional<int64_t> arrival_time;
@@ -42,7 +42,7 @@ public:
   cista::mmap::protection mode_;
   std::filesystem::path p_;
 
-  mm_paged_vecvec<stoptime_idx_t, stopTime> data_{};
+  mm_paged_vecvec<stop_time_idx_t, stopTime> data_{};
 
   static void store(std::string const& trip_id,
                     std::string const& stop_id,

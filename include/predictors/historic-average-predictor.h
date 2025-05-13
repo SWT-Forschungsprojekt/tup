@@ -5,7 +5,7 @@
 
 /**
  * Class implementing the predictor based on Historic Average Predictor from
- * transitime
+ * Transitime
  */
 class HistoricAveragePredictor {
 public:
