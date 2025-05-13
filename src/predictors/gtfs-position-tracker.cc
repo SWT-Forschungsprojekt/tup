@@ -56,7 +56,6 @@ void GTFSPositionTracker::predict(
         const auto distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
 
         if (distance < 100) {
-        
           auto now = std::chrono::system_clock::now();
           auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 

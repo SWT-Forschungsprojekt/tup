@@ -34,8 +34,8 @@ std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetab
     try {
         trip_idx = convert_trip_id_to_idx(timetable, trip_id);
     } catch (const std::runtime_error& e) {
-        std::cerr << "Fehler: " << e.what() << std::endl;
-        return {};
+      std::cerr << "Fehler: " << e.what() << std::endl;
+      return {};
     }
 
     if (trip_idx >= timetable.trip_transport_ranges_.size()) {
