@@ -53,5 +53,31 @@ void HistoricAveragePredictor::predict(
     }
   }
   // Part 2: Prediction based on the stored departures/arrivals
-  // Part 3: Helping method to load historic data from protobuf files
+  for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
+    // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
+    if (entity.has_vehicle()) {
+      const transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
+      // Get Trip ID
+      std::string tripID = vehicle_position.trip().trip_id();
+      std::string routeID = vehicle_position.trip().route_id();
+      std::string vehicleID = vehicle_position.vehicle().id();
+
+      // Get a stop list for a given trip
+      std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
+      // TODO: Check for each stop if we before or after the stop. Store the first one where we are before.
+      for (nigiri::location location : stop_list) {
+
+      }
+    }
+  }
+}
+
+/**
+ * Helping method to load historic data from protobuf files
+ * @param stopTimes vector of stopTimes to load
+ */
+void HistoricAveragePredictor::loadHistoricData(std::vector<stopTime> stopTimes) {
+  for (auto stopTime : stopTimes) {
+    this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, stopTime.departure_time, this->store_);
+  }
 }
