@@ -34,16 +34,20 @@ struct mm_paged_vecvec_helper {
 template <typename Key, typename T>
 using mm_paged_vecvec = typename mm_paged_vecvec_helper<Key, T>::type;
 
-struct stopTimeStore {
+class stopTimeStore {
   stopTimeStore(std::filesystem::path, cista::mmap::protection);
-
+public:
   cista::mmap mm(char const* file);
 
   cista::mmap::protection mode_;
   std::filesystem::path p_;
 
-  mm_paged_vecvec<stoptime_idx_t, stopTime> data_;
+  mm_paged_vecvec<stoptime_idx_t, stopTime> data_{};
 
-  static void store(std::string const& trip_id, std::string const& stop_id, std::optional<int64_t> arrival_time, std::optional<int64_t> departure_time);
+  static void store(std::string const& trip_id,
+                    std::string const& stop_id,
+                    std::optional<int64_t> arrival_time,
+                    std::optional<int64_t> departure_time,
+                    stopTimeStore& storage);
   static int64_t getAverageArrivalTime(std::string const& trip_id, std::string const& stop_id);
 };
