@@ -53,6 +53,7 @@ void HistoricAveragePredictor::predict(
     }
   }
   // Part 2: Prediction based on the stored departures/arrivals
+  // TODO: Empty output feed
   for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
@@ -66,8 +67,9 @@ void HistoricAveragePredictor::predict(
       std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
       // TODO: Check for each stop if we before or after the stop. Store the first one where we are before.
       for (nigiri::location location : stop_list) {
-
+        // TODO: if distance is smaller then before: continue, if it gets bigger again, take current stop
       }
+      // TODO: Create prediction and add it to outputFeed
     }
   }
 }
