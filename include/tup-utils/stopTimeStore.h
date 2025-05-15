@@ -21,6 +21,7 @@ struct stopTime {
   std::string stop_id;
   std::optional<int64_t> arrival_time;
   std::optional<int64_t> departure_time;
+  std::string date;
 };
 
 template <typename T>
