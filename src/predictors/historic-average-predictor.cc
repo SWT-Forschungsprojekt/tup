@@ -111,8 +111,8 @@ void HistoricAveragePredictor::predict(
  * Helping method to load historic data from protobuf files
  * @param stopTimes vector of stopTimes to load
  */
-void HistoricAveragePredictor::loadHistoricData(const std::vector<stopTime>* stopTimes) {
-  for (auto stopTime : stopTimes) {
+void HistoricAveragePredictor::loadHistoricData(const std::vector<stopTime>& stopTimes) {
+  for (stopTime stopTime : stopTimes) {
     this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, stopTime.departure_time, this->store_);
   }
 }

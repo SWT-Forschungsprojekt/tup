@@ -48,14 +48,13 @@ class stopTimeStore {
   /**
    * Create a stopTimeStore storing the memory-mapped files
    */
-  stopTimeStore(std::filesystem::path, cista::mmap::protection);
+  mm_paged_vecvec<stop_time_idx_t, stopTime> data_;
 public:
+  stopTimeStore(std::filesystem::path, cista::mmap::protection);
   cista::mmap mm(char const* file);
 
   cista::mmap::protection mode_;
   std::filesystem::path p_;
-
-  mm_paged_vecvec<stop_time_idx_t, stopTime> data_{};
 
   static void store(std::string const& trip_id,
                     std::string const& stop_id,
