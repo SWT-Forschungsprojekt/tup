@@ -64,19 +64,34 @@ std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetab
     return stops;
 }
 
-void predictorUtils::delete_old_trip_updates(std::unordered_set<std::string> currentTripIDs, transit_realtime::FeedMessage& outputFeed) {
+
+/**
+ * Deletes all trip updates that are not in the current trip IDs
+ * @param currentTripIDs to check if the trip update is still valid
+ * @param outputFeed to delete the trip updates from
+ */
+void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::string> currentTripIDs, transit_realtime::FeedMessage& outputFeed) {
   // Remove TripUpdates for trips not in vehiclePositions anymore
   for (int i = outputFeed.entity_size() - 1; i >= 0; --i) {
     const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
     if (outputFeedEntity.has_trip_update()) {
       const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
-      if (currentTripIDs.find(tripUpdate.trip().trip_id()) == currentTripIDs.end()) {
+      if (currentTripIDs.contains(tripUpdate.trip().trip_id())) {
         outputFeed.mutable_entity()->DeleteSubrange(i, 1);
       }
     }
   }
 }
 
+/**
+ * Sets the stop update for a given trip id and stop id. If the trip update does not exist, it will be created. If the stop update does not exist, it will be created.
+ * @param tripID of the trip to set the update for
+ * @param stopID of the stop to set the update for
+ * @param vehicleID of the vehicle to set the update for
+ * @param routeID of the route to set the update for
+ * @param newArivalTime of the stop to set the update for
+ * @param outputFeed to set the trip update in
+ */
 void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArivalTime, transit_realtime::FeedMessage& outputFeed){
   bool tripUpdateExists = false;
   transit_realtime::TripUpdate* tripUpdateToUpdate;
