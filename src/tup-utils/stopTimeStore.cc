@@ -30,5 +30,8 @@ int64_t stopTimeStore::getAverageArrivalTime(std::string const& trip_id, std::st
       count++;
     }
   }
+  if (count == 0) {
+    return 0;
+  }
   return sum / count;
 }

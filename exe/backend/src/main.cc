@@ -35,6 +35,8 @@
 #include "nigiri/common/parse_date.h"
 #include "nigiri/shapes_storage.h"
 
+#include "../../../include/predictors/historic-average-predictor.h"
+
 using namespace net::http::client;
 namespace fs = std::filesystem;
 namespace bpo = boost::program_options;
@@ -215,6 +217,11 @@ int main(int argc, char const* argv[]) {
       SimplePredictor simple_predictor(std::chrono::milliseconds(5000), false);
       simple_predictor.predict(vehiclePositions);
         };
+  } else if (predictor == "historic") {
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
+      auto historic_average_predictor = HistoricAveragePredictor();
+      historic_average_predictor.predict(tripUpdatesFeed, vehiclePositions, timetable);
+    };
   } else {
     std::cout << "No valid predictor chosen!" << std::endl;
     return 1;

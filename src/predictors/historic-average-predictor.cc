@@ -26,6 +26,10 @@ void HistoricAveragePredictor::predict(
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
   // Part 1: Storing of departures based on GTFS-Position-Tracker
+  auto now = std::chrono::system_clock::now();
+  auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+  auto today = std::format("{:%Y-%m-%d}", now);
+
   for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
@@ -53,7 +57,7 @@ void HistoricAveragePredictor::predict(
         const auto distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
 
         if (distance < 100) {
-          this->store_.getAverageArrivalTime(tripID, location.id_.data());
+          this->store_.store(tripID, location.id_.data(), current_time, today);
         }
       }
     }
@@ -61,6 +65,10 @@ void HistoricAveragePredictor::predict(
   // Part 2: Prediction based on the stored departures/arrivals
   // Empty output feed, as we generate all tripUpdates every time new
   tripUpdates.Clear();
+  transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
+  header->set_gtfs_realtime_version("2.0");
+  header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
+  header->set_timestamp(time(nullptr));
   for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
@@ -92,8 +100,10 @@ void HistoricAveragePredictor::predict(
           break;
         }
       }
-      auto now = std::chrono::system_clock::now();
-      auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+      auto arrival_time = this->store_.getAverageArrivalTime(tripID, prediction_stop.id_.data());
+      if (arrival_time == 0) {
+        continue;
+      }
       // Create a prediction and add it to outputFeed
       transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
       new_entity->set_id(tripID);
@@ -109,7 +119,7 @@ void HistoricAveragePredictor::predict(
       transit_realtime::TripUpdate_StopTimeEvent* departureToUpdate = stop_time_update->mutable_departure();
 
       tripUpdateToUpdate->set_timestamp(current_time);
-      departureToUpdate->set_time(this->store_.getAverageArrivalTime(tripID, prediction_stop.id_.data()));
+      departureToUpdate->set_time(arrival_time);
     }
   }
 }
