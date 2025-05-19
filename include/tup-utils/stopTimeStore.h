@@ -3,7 +3,19 @@
 #include <cstdint>
 
 #include <string>
+#include <tuple>
 #include <unordered_map>
+
+
+// Hash-Funktor für std::tuple
+template <>
+struct std::hash<std::tuple<std::string, std::string, std::string>> {
+  size_t operator()(const tuple<string, string, string>& t) const {
+    return hash<string>{}(get<0>(t)) ^ (hash<string>{}(get<1>(t)) << 1) ^
+           (hash<string>{}(get<2>(t)) << 2);
+  }
+};
+
 
 /**
  * An Event when a vehicle of a trip arrives or ends at a stop

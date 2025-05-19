@@ -9,9 +9,7 @@
  */
 class HistoricAveragePredictor {
 public:
-  explicit HistoricAveragePredictor(const std::filesystem::path& path)
-    : store_(path, cista::mmap::protection::WRITE) {}
-
+  HistoricAveragePredictor();
   /**
    * Method to predict the next stop and arrival time
    * @param tripUpdates current state of the generated tripUpdates feed

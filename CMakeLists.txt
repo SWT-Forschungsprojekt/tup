@@ -40,7 +40,7 @@ file(GLOB_RECURSE sources exe/backend/src/*.cc)
 
 # add the data to the target, so it becomes visible in some IDE
 
-file(GLOB_RECURSE predictors src/predictors/*.cc include/predictors/*.h)
+file(GLOB_RECURSE predictors src/predictors/*.cc include/predictors/*.h src/tup-utils/*.cc include/tup-utils/*.h)
 file(GLOB_RECURSE tup-backend-src exe/backend/src/*.cc exe/backend/include/*.h)
 add_executable(tup-backend ${tup-backend-src} ${predictors})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb gtfs-rt http-client)

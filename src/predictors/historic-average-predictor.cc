@@ -1,9 +1,16 @@
 #include "predictors/historic-average-predictor.h"
 #include "predictors/predictor-utils.h"
 
+#include <iostream>
+#include <iomanip>
+#include <ctime>
+#include <sstream>
+
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/strategies/spherical/distance_haversine.hpp>
+
+HistoricAveragePredictor::HistoricAveragePredictor() = default;
 
 /**
  * Predictor based on the HistoricAveragePredictor approach
@@ -46,7 +53,7 @@ void HistoricAveragePredictor::predict(
         const auto distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
 
         if (distance < 100) {
-          this->store_.getAverageArrivalTime(tripID, location.id_.data(), this->store_);
+          this->store_.getAverageArrivalTime(tripID, location.id_.data());
         }
       }
     }
@@ -102,7 +109,7 @@ void HistoricAveragePredictor::predict(
       transit_realtime::TripUpdate_StopTimeEvent* departureToUpdate = stop_time_update->mutable_departure();
 
       tripUpdateToUpdate->set_timestamp(current_time);
-      departureToUpdate->set_time(this->store_.getAverageArrivalTime(tripID, prediction_stop.id_.data(), this->store_));
+      departureToUpdate->set_time(this->store_.getAverageArrivalTime(tripID, prediction_stop.id_.data()));
     }
   }
 }
@@ -112,7 +119,11 @@ void HistoricAveragePredictor::predict(
  * @param stopTimes vector of stopTimes to load
  */
 void HistoricAveragePredictor::loadHistoricData(const std::vector<stopTime>& stopTimes) {
+  const auto t = std::time(nullptr);
+  const auto tm = *std::localtime(&t);
   for (stopTime stopTime : stopTimes) {
-    this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, stopTime.departure_time, this->store_);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+    this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, oss.str());
   }
 }
