@@ -30,8 +30,14 @@ wget -O BUCHAREST-REGION.zip https://gtfs.tpbi.ro/regional/BUCHAREST-REGION.zip
 unzip BUCHAREST-REGION.zip -d input
 ```
 
-Then it can be run as following:
+Then it can be run as follows:
 
 ```shell
 ./build/tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
+```
+
+### Tests
+To run the tests, first build it as usual and enter the build directory and run the following:
+```shell
+ctest
 ```
