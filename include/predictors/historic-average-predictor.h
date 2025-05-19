@@ -19,6 +19,10 @@ public:
   void predict(transit_realtime::FeedMessage& tripUpdates, 
               const transit_realtime::FeedMessage& vehiclePositions,
               const nigiri::timetable& timetable);
+  /**
+   * load Historic Data into store to allow to load collected protobuf file
+   * @param stopTimes vector of stop times that should be stored in the store
+   */
   void loadHistoricData(const std::vector<stopTime>& stopTimes);
   stopTimeStore store_;
 };
