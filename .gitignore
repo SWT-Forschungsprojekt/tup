@@ -1,3 +1,6 @@
+.vscode/launch.json
+.vscode/tasks.json
+
 /docs/ui/**
 /docs/tiles-profiles/**
 /docs/motis
