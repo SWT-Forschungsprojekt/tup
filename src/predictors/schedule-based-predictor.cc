@@ -187,12 +187,14 @@ void ScheduleBasedPredictor::predict(
           transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
           trip->set_trip_id(tripID);
           trip->set_route_id(routeID);
+          trip->set_schedule_relationship(transit_realtime::TripDescriptor_ScheduleRelationship_SCHEDULED);
           tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
         }
 
         if (!stopTimeUpdateExists){
           transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
           stop_time_update->set_stop_id(stops[closest_segment_start + 1].id_);
+          stop_time_update->set_schedule_relationship(transit_realtime::TripUpdate_StopTimeUpdate_ScheduleRelationship_SCHEDULED);
           arrivalToUpdate = stop_time_update->mutable_departure();
         }
 
