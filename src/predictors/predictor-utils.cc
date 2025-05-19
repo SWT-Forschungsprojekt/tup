@@ -89,14 +89,14 @@ void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::strin
  * @param stopID of the stop to set the update for
  * @param vehicleID of the vehicle to set the update for
  * @param routeID of the route to set the update for
- * @param newArivalTime of the stop to set the update for
+ * @param newArrivalTime of the stop to set the update for
  * @param outputFeed to set the trip update in
  */
-void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArivalTime, transit_realtime::FeedMessage& outputFeed){
+void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArrivalTime, transit_realtime::FeedMessage& outputFeed){
   bool tripUpdateExists = false;
   transit_realtime::TripUpdate* tripUpdateToUpdate;
   bool stopTimeUpdateExists = false;
-  transit_realtime::TripUpdate_StopTimeEvent* ariavalToUpdate;
+  transit_realtime::TripUpdate_StopTimeEvent* arrivalToUpdate;
 
   for (int i = 0; i < outputFeed.entity_size(); ++i) {
     const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
@@ -107,7 +107,7 @@ void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID
         const transit_realtime::TripUpdate_StopTimeUpdate& update = outputFeedEntity.trip_update().stop_time_update(j);
         if (update.stop_id() == stopID) {
           stopTimeUpdateExists = true;
-          ariavalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
+          arrivalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
           break;
         }
       }
@@ -128,12 +128,12 @@ void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID
   if (!stopTimeUpdateExists){
     transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
     stop_time_update->set_stop_id(stopID);
-    ariavalToUpdate = stop_time_update->mutable_arrival();
+    arrivalToUpdate = stop_time_update->mutable_arrival();
   }
   
   auto now = std::chrono::system_clock::now();
   auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
   
   tripUpdateToUpdate->set_timestamp(current_time);
-  ariavalToUpdate->set_time(newArivalTime);
+  arrivalToUpdate->set_time(newArrivalTime);
 }
