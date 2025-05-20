@@ -161,7 +161,7 @@ void ScheduleBasedPredictor::predict(
       if (progress_time > progress_way) {
         // Calculate predicted arrival: current_time + time needed for the segment * (1 - progress_way)
         const long predicted_arrival = current_time + static_cast<int>((next_stop_arrival_time - departure_time.time_since_epoch().count()) * (1 - progress_way));
-        
+
         //Update feed accordingly
         predictorUtils::set_trip_update(
             tripID,

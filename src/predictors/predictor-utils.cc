@@ -76,7 +76,7 @@ void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::strin
     const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
     if (outputFeedEntity.has_trip_update()) {
       const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
-      if (currentTripIDs.contains(tripUpdate.trip().trip_id())) {
+      if (!currentTripIDs.contains(tripUpdate.trip().trip_id())) {
         outputFeed.mutable_entity()->DeleteSubrange(i, 1);
       }
     }
@@ -89,14 +89,14 @@ void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::strin
  * @param stopID of the stop to set the update for
  * @param vehicleID of the vehicle to set the update for
  * @param routeID of the route to set the update for
- * @param newArivalTime of the stop to set the update for
+ * @param newArrivalTime of the stop to set the update for
  * @param outputFeed to set the trip update in
  */
-void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArivalTime, int32_t uncertainty, transit_realtime::FeedMessage& outputFeed){
+void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArrivalTime, int32_t uncertainty, transit_realtime::FeedMessage& outputFeed){
   bool tripUpdateExists = false;
   transit_realtime::TripUpdate* tripUpdateToUpdate;
   bool stopTimeUpdateExists = false;
-  transit_realtime::TripUpdate_StopTimeEvent* ariavalToUpdate;
+  transit_realtime::TripUpdate_StopTimeEvent* arrivalToUpdate;
 
   for (int i = 0; i < outputFeed.entity_size(); ++i) {
     const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
@@ -107,7 +107,7 @@ void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID
         const transit_realtime::TripUpdate_StopTimeUpdate& update = outputFeedEntity.trip_update().stop_time_update(j);
         if (update.stop_id() == stopID) {
           stopTimeUpdateExists = true;
-          ariavalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
+          arrivalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
           break;
         }
       }
@@ -122,19 +122,21 @@ void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID
     transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
     trip->set_trip_id(tripID);
     trip->set_route_id(routeID);
+    trip->set_schedule_relationship(transit_realtime::TripDescriptor_ScheduleRelationship_SCHEDULED);
     tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
   }
 
   if (!stopTimeUpdateExists){
     transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
     stop_time_update->set_stop_id(stopID);
-    ariavalToUpdate = stop_time_update->mutable_arrival();
+    stop_time_update->set_schedule_relationship(transit_realtime::TripUpdate_StopTimeUpdate_ScheduleRelationship_SCHEDULED);
+    arrivalToUpdate = stop_time_update->mutable_arrival();
   }
   
   auto now = std::chrono::system_clock::now();
   auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
   
   tripUpdateToUpdate->set_timestamp(current_time);
-  ariavalToUpdate->set_time(newArivalTime);
-  ariavalToUpdate->set_uncertainty(uncertainty);
+  arrivalToUpdate->set_time(newArrivalTime);
+  arrivalToUpdate->set_uncertainty(uncertainty);
 }
