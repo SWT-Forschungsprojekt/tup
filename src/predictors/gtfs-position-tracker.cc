@@ -22,7 +22,8 @@ void GTFSPositionTracker::predict(
     transit_realtime::FeedMessage& tripUpdates,
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
-  
+  transit_realtime::FeedMessage tripUpdatesCopy;
+  tripUpdatesCopy.CopyFrom(tripUpdates);
   //Save all current tripIds in vehiclePositions
   std::unordered_set<std::string> currentTripIDs = {};
 
@@ -62,15 +63,17 @@ void GTFSPositionTracker::predict(
               routeID,
               current_time,
               0,
-              tripUpdates);
+              tripUpdatesCopy);
         }
       }
     }
   }
   
   // Remove TripUpdates for trips not in vehiclePositions anymore
-  predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdates);
+  predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdatesCopy);
 
-  transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
+  transit_realtime::FeedHeader* header = tripUpdatesCopy.mutable_header();
   header->set_timestamp(time(nullptr));
+
+  tripUpdates = tripUpdatesCopy;
 }
