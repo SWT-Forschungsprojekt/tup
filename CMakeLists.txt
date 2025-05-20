@@ -40,8 +40,31 @@ file(GLOB_RECURSE sources exe/backend/src/*.cc)
 
 # add the data to the target, so it becomes visible in some IDE
 
-file(GLOB_RECURSE predictors src/predictors/*.cc include/predictors/*.h)
+file(GLOB_RECURSE predictors src/predictors/*.cc include/predictors/*.h src/tup-utils/*.cc include/tup-utils/*.h)
 file(GLOB_RECURSE tup-backend-src exe/backend/src/*.cc exe/backend/include/*.h)
 add_executable(tup-backend ${tup-backend-src} ${predictors})
 target_link_libraries(tup-backend boost-json conf boost fmt utl geo web-server nigiri tbb gtfs-rt http-client)
 target_include_directories(tup-backend PRIVATE exe/backend/include include)
+
+# Test setup
+add_library(tup-utils
+        src/tup-utils/stopTimeStore.cc
+)
+target_include_directories(tup-utils PUBLIC include)
+target_compile_features(tup-utils PUBLIC cxx_std_23)
+
+enable_testing()
+
+add_executable(
+        store_test
+        test/store_test.cc
+)
+target_link_libraries(
+    store_test
+    GTest::gtest_main
+    tup-utils
+)
+target_include_directories(store_test PRIVATE include)
+
+include(GoogleTest)
+gtest_discover_tests(store_test)

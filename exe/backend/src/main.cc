@@ -14,6 +14,7 @@
 #include "predictors/simple-predictor.h"
 #include "predictors/gtfs-position-tracker.h"
 #include "predictors/schedule-based-predictor.h"
+#include "predictors/historic-average-predictor.h"
 
 #include <vector>
 
@@ -93,6 +94,7 @@ int main(int argc, char const* argv[]) {
   auto c = loader_config{};
 
   auto desc = bpo::options_description{"Options"};
+  auto pin = fs::path{};
   desc.add_options()  //
       ("help,h", "produce this help message")  //
 
@@ -107,6 +109,7 @@ int main(int argc, char const* argv[]) {
       ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
       ("predictor,P", bpo::value(&predictor)->default_value("gtfs-position-tracker"), "Choose which predictor to use")
       ("in,i", bpo::value(&in)->required(), "input path")  //
+      ("protobuf_input,pi", bpo::value(&pin)->default_value("protobuf"), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
       ("ignore", bpo::bool_switch(&ignore)->default_value(false),
@@ -202,6 +205,7 @@ int main(int argc, char const* argv[]) {
   header->set_gtfs_realtime_version("2.0");
   header->set_incrementality(transit_realtime::FeedHeader_Incrementality_FULL_DATASET);
   header->set_timestamp(time(nullptr));
+  auto historic_average_predictor = HistoricAveragePredictor();
   if (predictor == "gtfs-position-tracker") {
     method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
       GTFSPositionTracker::predict(tripUpdatesFeed, vehiclePositions, timetable);
@@ -215,6 +219,44 @@ int main(int argc, char const* argv[]) {
       SimplePredictor simple_predictor(std::chrono::milliseconds(5000), false);
       simple_predictor.predict(vehiclePositions);
         };
+  } else if (predictor == "historic") {
+    if (exists(pin) && is_directory(pin)) {
+      for (const auto& entry : fs::directory_iterator(pin)) {
+        if (entry.path().extension() == ".pbf") {
+          std::ifstream input(entry.path(), std::ios::binary);
+          if (!input) {
+            continue;
+          }
+          std::string buffer(std::istreambuf_iterator<char>(input), {});
+          transit_realtime::FeedMessage feed;
+          if (!feed.ParseFromString(buffer)) {
+            continue;
+          }
+          std::vector<stopTime> stopTimes;
+          for (const auto& entity : feed.entity()) {
+            if (entity.has_trip_update()) {
+              const auto& trip = entity.trip_update();
+              for (const auto& update : trip.stop_time_update()) {
+                if (update.has_arrival()) {
+                  stopTime stopTime = {trip.trip().trip_id(), update.stop_id(),
+                       date::format("%F",
+                                    date::floor<date::days>(
+                                        std::chrono::system_clock::time_point(
+                                            std::chrono::seconds(
+                                                update.arrival().time())))),
+                    update.arrival().time()};
+                  stopTimes.push_back(stopTime);
+                }
+              }
+            }
+          }
+          historic_average_predictor.loadHistoricData(stopTimes);
+        }
+      }
+    }
+    method = [&](const transit_realtime::FeedMessage& vehiclePositions) {
+      historic_average_predictor.predict(tripUpdatesFeed, vehiclePositions, timetable);
+    };
   } else {
     std::cout << "No valid predictor chosen!" << std::endl;
     return 1;
