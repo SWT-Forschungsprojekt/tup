@@ -76,7 +76,7 @@ void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::strin
     const transit_realtime::FeedEntity& outputFeedEntity = outputFeed.entity(i);
     if (outputFeedEntity.has_trip_update()) {
       const transit_realtime::TripUpdate& tripUpdate = outputFeedEntity.trip_update();
-      if (currentTripIDs.contains(tripUpdate.trip().trip_id())) {
+      if (!currentTripIDs.contains(tripUpdate.trip().trip_id())) {
         outputFeed.mutable_entity()->DeleteSubrange(i, 1);
       }
     }

@@ -1,0 +1,12 @@
+.idea
+.devcontainer
+.vscode
+build
+cmake-build-debug
+input
+out
+#deps
+#.pgk.mutex
+tt.bin
+gtfs.zip
+*.zip
