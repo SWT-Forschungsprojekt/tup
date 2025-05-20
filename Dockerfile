@@ -49,4 +49,4 @@ WORKDIR /app
 COPY --from=builder /app/build/tup-backend /app/
 
 # No command is specified here, as the entry point will be set manually to ensure felxibility
-# docker run --rm tup-test ./tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
+# docker run --rm -v ./input/:/app/input/ -p 8000:8000 registry.fsintra.net/mame_uni/tup:0.0.1 ./tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
