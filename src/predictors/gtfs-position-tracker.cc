@@ -14,19 +14,19 @@ GTFSPositionTracker::GTFSPositionTracker() = default;
  * This checks if any of the vehicle Positions is close to a stop. If so,
  * a tripUpdate for the according trip and stop will be created.
  *
- * @param outputFeed current tripUpdate feed to be updated
- * @param vehiclePositionFeed positions of vehicles as feed
+ * @param tripUpdates current tripUpdate feed to be updated
+ * @param vehiclePositions positions of vehicles as feed
  * @param timetable timetable to match the vehiclePositions to stops
  */
 void GTFSPositionTracker::predict(
-    transit_realtime::FeedMessage& outputFeed,
-    const transit_realtime::FeedMessage& vehiclePositionFeed,
+    transit_realtime::FeedMessage& tripUpdates,
+    const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
   
   //Save all current tripIds in vehiclePositions
   std::unordered_set<std::string> currentTripIDs = {};
 
-  for (const transit_realtime::FeedEntity& entity : vehiclePositionFeed.entity()) {
+  for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
     // For this prototype we only care about vehicle positions. Service alerts and other trip updates are ignored
     if (entity.has_vehicle()) {
       const transit_realtime::VehiclePosition& vehicle_position = entity.vehicle();
@@ -34,13 +34,11 @@ void GTFSPositionTracker::predict(
       std::string tripID = vehicle_position.trip().trip_id();
       currentTripIDs.insert(tripID);
 
-      std::string routeID = vehicle_position.trip().route_id();
-      std::string vehicleID = vehicle_position.vehicle().id();
+      const std::string routeID = vehicle_position.trip().route_id();
+      const std::string vehicleID = vehicle_position.vehicle().id();
 
-      // Get a stop list for a given trip
-      std::vector<nigiri::location> stop_list = predictorUtils::get_stops_for_trip(timetable, tripID);
       // check for each stop if we are close
-      for (nigiri::location location : stop_list) {
+      for (nigiri::location location : predictorUtils::get_stops_for_trip(timetable, tripID)) {
 
         namespace bg = boost::geometry;
         bg::model::point<double, 2, bg::cs::spherical_equatorial<bg::degree>>
@@ -53,11 +51,9 @@ void GTFSPositionTracker::predict(
         bg::set<0>(location_point, location.pos_.lng_);
         bg::set<1>(location_point, location.pos_.lat_);
 
-        const auto distance = bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0));
-
-        if (distance < 100) {
+        if (bg::distance(vehicle_point, location_point, bg::strategy::distance::haversine(6371000.0)) < 100) {
           auto now = std::chrono::system_clock::now();
-          auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+          const auto current_time = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 
           predictorUtils::set_trip_update(
               tripID,
@@ -65,15 +61,15 @@ void GTFSPositionTracker::predict(
               vehicleID,
               routeID,
               current_time,
-              outputFeed);
+              tripUpdates);
         }
       }
     }
   }
   
   // Remove TripUpdates for trips not in vehiclePositions anymore
-  predictorUtils::delete_old_trip_updates(currentTripIDs, outputFeed);
+  predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdates);
 
-  transit_realtime::FeedHeader* header = outputFeed.mutable_header();
+  transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
   header->set_timestamp(time(nullptr));
 }
