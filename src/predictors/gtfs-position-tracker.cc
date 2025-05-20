@@ -61,6 +61,7 @@ void GTFSPositionTracker::predict(
               vehicleID,
               routeID,
               current_time,
+              0,
               tripUpdates);
         }
       }

@@ -56,6 +56,9 @@ void ScheduleBasedPredictor::predict(
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
     
+    // Save all current tripIds in vehiclePositions
+    std::unordered_set<std::string> currentTripIDs = {};
+
     for (const transit_realtime::FeedEntity& entity : vehiclePositions.entity()) {
         if (!entity.has_vehicle()) {
             continue;
@@ -72,6 +75,8 @@ void ScheduleBasedPredictor::predict(
         boost::geometry::set<1>(vehicle_point, vehicle_position.position().latitude());
 
         std::string tripID = vehicle_position.trip().trip_id();
+        currentTripIDs.insert(tripID);
+
         std::string routeID = vehicle_position.trip().route_id();
         std::string vehicleID = vehicle_position.vehicle().id();
         const std::vector<nigiri::location>& stops = predictorUtils::get_stops_for_trip(timetable, tripID);
@@ -156,53 +161,22 @@ void ScheduleBasedPredictor::predict(
       if (progress_time > progress_way) {
         // Calculate predicted arrival: current_time + time needed for the segment * (1 - progress_way)
         const long predicted_arrival = current_time + static_cast<int>((next_stop_arrival_time - departure_time.time_since_epoch().count()) * (1 - progress_way));
-        // Update the feed accordingly
-        transit_realtime::TripUpdate_StopTimeUpdate stopTimeUpdate;
-        bool tripUpdateExists = false;
-        transit_realtime::TripUpdate* tripUpdateToUpdate;
-        bool stopTimeUpdateExists = false;
-        transit_realtime::TripUpdate_StopTimeEvent* arrivalToUpdate;
 
-        for (int i = 0; i < tripUpdates.entity_size(); ++i) {
-          const transit_realtime::FeedEntity& outputFeedEntity = tripUpdates.entity(i);
-          if (outputFeedEntity.has_trip_update() && outputFeedEntity.trip_update().trip().trip_id() == tripID) {
-            tripUpdateExists = true;
-            tripUpdateToUpdate = tripUpdates.mutable_entity(i)->mutable_trip_update();
-            for (int j = 0; j < outputFeedEntity.trip_update().stop_time_update_size(); ++j) {
-              const transit_realtime::TripUpdate_StopTimeUpdate& update = outputFeedEntity.trip_update().stop_time_update(j);
-              if (update.stop_id() == stops[closest_segment_start + 1].id_) {
-                stopTimeUpdateExists = true;
-                arrivalToUpdate = tripUpdateToUpdate->mutable_stop_time_update(j)->mutable_arrival();
-                break;
-              }
-            }
-          }
-        }
-
-        if (!tripUpdateExists){
-          transit_realtime::FeedEntity* new_entity = tripUpdates.add_entity();
-          new_entity->set_id(tripID);
-
-          tripUpdateToUpdate = new_entity->mutable_trip_update();
-          transit_realtime::TripDescriptor* trip = tripUpdateToUpdate->mutable_trip();
-          trip->set_trip_id(tripID);
-          trip->set_route_id(routeID);
-          trip->set_schedule_relationship(transit_realtime::TripDescriptor_ScheduleRelationship_SCHEDULED);
-          tripUpdateToUpdate->mutable_vehicle()->set_id(vehicleID);
-        }
-
-        if (!stopTimeUpdateExists){
-          transit_realtime::TripUpdate_StopTimeUpdate* stop_time_update = tripUpdateToUpdate->add_stop_time_update();
-          stop_time_update->set_stop_id(stops[closest_segment_start + 1].id_);
-          stop_time_update->set_schedule_relationship(transit_realtime::TripUpdate_StopTimeUpdate_ScheduleRelationship_SCHEDULED);
-          arrivalToUpdate = stop_time_update->mutable_departure();
-        }
-
-        tripUpdateToUpdate->set_timestamp(current_time);
-        arrivalToUpdate->set_time(predicted_arrival);
+        //Update feed accordingly
+        predictorUtils::set_trip_update(
+            tripID,
+            stops[closest_segment_start + 1].id_,
+            vehicleID,
+            routeID,
+            predicted_arrival,
+            0,
+            tripUpdates);
 
       }
     }
+
+    // Delete old trip updates
+    predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdates);
 
     transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
     header->set_timestamp(time(nullptr));
