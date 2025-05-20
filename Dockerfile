@@ -32,15 +32,10 @@ RUN ninja -C build
 # Stage 2: Create the final runtime image
 FROM ubuntu:latest
 
-# Install only the runtime dependencies
-RUN apt-get update 
-RUN apt-get install -y \
-    libboost-all-dev \
-    protobuf-compiler \
-    libprotobuf-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libtbb-dev \
-    curl \
-    && apt-get clean
+    libboost-all-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory inside the runtime image
 WORKDIR /app
@@ -48,5 +43,5 @@ WORKDIR /app
 # Copy the built executable from the builder stage
 COPY --from=builder /app/build/tup-backend /app/
 
-# No command is specified here, as the entry point will be set manually to ensure felxibility
-# docker run --rm -v ./input/:/app/input/ -p 8000:8000 registry.fsintra.net/mame_uni/tup:0.0.1 ./tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
+# No command is specified here, as the entry point will be set manually to ensure flexibility
+# docker run --rm -v ./input/:/app/input/ -p 8000:8000 ghcr.io/swt-forschungsprojekt/tup:0.0.2 ./tup-backend -i input -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
