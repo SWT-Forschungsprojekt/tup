@@ -55,7 +55,8 @@ void ScheduleBasedPredictor::predict(
     transit_realtime::FeedMessage& tripUpdates,
     const transit_realtime::FeedMessage& vehiclePositions,
     const nigiri::timetable& timetable) {
-    
+    transit_realtime::FeedMessage tripUpdatesCopy;
+    tripUpdatesCopy.CopyFrom(tripUpdates);
     // Save all current tripIds in vehiclePositions
     std::unordered_set<std::string> currentTripIDs = {};
 
@@ -170,14 +171,15 @@ void ScheduleBasedPredictor::predict(
             routeID,
             predicted_arrival,
             0,
-            tripUpdates);
+            tripUpdatesCopy);
 
       }
     }
 
     // Delete old trip updates
-    predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdates);
+    predictorUtils::delete_old_trip_updates(currentTripIDs, tripUpdatesCopy);
 
-    transit_realtime::FeedHeader* header = tripUpdates.mutable_header();
+    transit_realtime::FeedHeader* header = tripUpdatesCopy.mutable_header();
     header->set_timestamp(time(nullptr));
+    tripUpdates = tripUpdatesCopy;
 }
