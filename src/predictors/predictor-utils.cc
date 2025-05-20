@@ -92,7 +92,7 @@ void predictorUtils::delete_old_trip_updates(const std::unordered_set<std::strin
  * @param newArivalTime of the stop to set the update for
  * @param outputFeed to set the trip update in
  */
-void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArivalTime, transit_realtime::FeedMessage& outputFeed){
+void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID, std::string vehicleID, std::string routeID, int64_t newArivalTime, int32_t uncertainty, transit_realtime::FeedMessage& outputFeed){
   bool tripUpdateExists = false;
   transit_realtime::TripUpdate* tripUpdateToUpdate;
   bool stopTimeUpdateExists = false;
@@ -136,4 +136,5 @@ void predictorUtils::set_trip_update(std::string tripID, std::string_view stopID
   
   tripUpdateToUpdate->set_timestamp(current_time);
   ariavalToUpdate->set_time(newArivalTime);
+  ariavalToUpdate->set_uncertainty(uncertainty);
 }
