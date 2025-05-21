@@ -244,7 +244,7 @@ int main(int argc, char const* argv[]) {
                                         std::chrono::system_clock::time_point(
                                             std::chrono::seconds(
                                                 update.arrival().time())))),
-                    update.arrival().time()};
+                    update.arrival().time() % 86400};
                   stopTimes.push_back(stopTime);
                 }
               }

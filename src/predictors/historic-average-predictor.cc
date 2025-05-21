@@ -57,7 +57,7 @@ void HistoricAveragePredictor::predict(
         const auto distance = bg::distance(vehicle_point, locationPoint, bg::strategy::distance::haversine(6371000.0));
 
         if (distance < 100) {
-          this->store_.store(tripID, location.id_.data(), current_time, today);
+          this->store_.store(tripID, location.id_.data(), current_time % 86400, today);
         }
       }
     }
@@ -119,6 +119,11 @@ void HistoricAveragePredictor::predict(
       transit_realtime::TripUpdate_StopTimeEvent* arrivalToUpdate = stop_time_update->mutable_arrival();
 
       tripUpdateToUpdate->set_timestamp(current_time);
+      struct tm* localTime = localtime(&current_time);
+      localTime->tm_hour = 0;
+      localTime->tm_min = 0;
+      localTime->tm_sec = 0;
+      arrival_time = arrival_time + mktime(localTime);
       arrivalToUpdate->set_time(arrival_time);
       arrivalToUpdate->set_uncertainty(0);
     }
@@ -135,6 +140,6 @@ void HistoricAveragePredictor::loadHistoricData(const std::vector<stopTime>& sto
   for (stopTime stopTime : stopTimes) {
     std::ostringstream oss;
     oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
-    this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time, oss.str());
+    this->store_.store(stopTime.trip_id, stopTime.stop_id, stopTime.arrival_time % 86400, oss.str());
   }
 }
