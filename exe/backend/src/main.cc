@@ -222,7 +222,7 @@ int main(int argc, char const* argv[]) {
   } else if (predictor == "historic") {
     if (exists(pin) && is_directory(pin)) {
       for (const auto& entry : fs::directory_iterator(pin)) {
-        if (entry.path().extension() == ".pbf") {
+        if (entry.path().extension() == ".pb") {
           std::ifstream input(entry.path(), std::ios::binary);
           if (!input) {
             continue;
