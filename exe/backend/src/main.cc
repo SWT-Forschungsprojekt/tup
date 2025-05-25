@@ -222,7 +222,7 @@ int main(int argc, char const* argv[]) {
   } else if (predictor == "historic") {
     if (exists(pin) && is_directory(pin)) {
       for (const auto& entry : fs::directory_iterator(pin)) {
-        std::cout << "Failed to parse feed from file: " << entry.path() << std::endl;
+        std::cout << "Trying to parse feed from file: " << entry.path() << std::endl;
         if (entry.path().extension() == ".pb") {
           std::ifstream input(entry.path(), std::ios::binary);
           if (!input) {
