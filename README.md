@@ -41,3 +41,41 @@ To run the tests, first build it as usual and enter the build directory and run 
 ```shell
 ctest
 ```
+
+
+# Testing all feeds
+
+TPBI
+```shell
+./build/tup-backend -P schedule-based -i tpbi -v "https://gtfs.tpbi.ro/api/gtfs-rt/vehiclePositions"
+```
+
+Arriva
+```shell
+./build/tup-backend -P schedule-based -i arriva -v "https://gtfs.ovapi.nl/nl/vehiclePositions.pb"
+```
+
+Translink
+```shell
+./build/tup-backend -P schedule-based -i Translink -v "https://gtfsrt.api.translink.com.au/api/realtime/SEQ/VehiclePositions"
+```
+Vy Express
+```shell
+./build/tup-backend -P schedule-based -i VyExpress -v "https://api.entur.io/realtime/v1/gtfs-rt/vehicle-positions?datasource=VYX"
+```
+Commbus
+```shell
+./build/tup-backend -P schedule-based -i Commbus -v "https://citycommbus.com/gtfs-rt/vehiclepositions"
+```
+ZDiTM
+```shell
+./build/tup-backend -P schedule-based -i ZDiTM -v "https://www.zditm.szczecin.pl/storage/gtfs/gtfs-rt-vehicles.pb"
+```
+Mountain Line Transit	
+```shell
+./build/tup-backend -P schedule-based -i MountainLineTransit -v "https://mountainline.syncromatics.com/gtfs-rt/vehiclepositions"
+```
+City of Madison	
+```shell
+./build/tup-backend -P schedule-based -i CityOfMadison -v "https://metromap.cityofmadison.com/gtfsrt/vehicles"
+```
