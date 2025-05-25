@@ -222,6 +222,7 @@ int main(int argc, char const* argv[]) {
   } else if (predictor == "historic") {
     if (exists(pin) && is_directory(pin)) {
       for (const auto& entry : fs::directory_iterator(pin)) {
+        std::cout << "Failed to parse feed from file: " << entry.path() << std::endl;
         if (entry.path().extension() == ".pb") {
           std::ifstream input(entry.path(), std::ios::binary);
           if (!input) {
@@ -230,8 +231,6 @@ int main(int argc, char const* argv[]) {
           std::string buffer(std::istreambuf_iterator<char>(input), {});
           transit_realtime::FeedMessage feed;
           if (!feed.ParseFromString(buffer)) {
-            //log file parsing error
-            std::cout << "Failed to parse feed from file: " << entry.path() << std::endl;
             continue;
           }
           std::vector<stopTime> stopTimes;
