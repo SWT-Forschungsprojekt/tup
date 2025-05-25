@@ -231,7 +231,7 @@ int main(int argc, char const* argv[]) {
           transit_realtime::FeedMessage feed;
           if (!feed.ParseFromString(buffer)) {
             //log file parsing error
-            std::cerr << "Failed to parse feed from file: " << entry.path() << std::endl;
+            std::cout << "Failed to parse feed from file: " << entry.path() << std::endl;
             continue;
           }
           std::vector<stopTime> stopTimes;
