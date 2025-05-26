@@ -39,13 +39,15 @@ std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetab
     }
 
     if (trip_idx >= timetable.trip_transport_ranges_.size()) {
-        throw std::runtime_error("Trip-Index außerhalb des gültigen Bereichs");
+      std::cerr << "Trip-Index außerhalb des gültigen Bereichs" << std::endl;
+      return {};
     }
 
     auto const& transports = timetable.trip_transport_ranges_[trip_idx];
 
     if (transports.empty()) {
-      throw std::runtime_error("Keine Transporte für Trip-ID: " + trip_id);
+      std::cerr << "No transports for Trip-ID: " << trip_id << std::endl;
+      return {};
     }
 
     // Ersten Transport nehmen und dessen Route
@@ -63,7 +65,6 @@ std::vector<nigiri::location> predictorUtils::get_stops_for_trip(nigiri::timetab
     }
     return stops;
 }
-
 
 /**
  * Deletes all trip updates that are not in the current trip IDs
