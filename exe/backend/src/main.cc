@@ -232,7 +232,6 @@ int main(int argc, char const* argv[]) {
           if (!feed.ParseFromIstream(&input)) {
             continue;
           }
-          std::vector<stopTime> stopTimes;
           for (const auto& entity : feed.entity()) {
             if (entity.has_trip_update()) {
               const auto& trip = entity.trip_update();
@@ -246,12 +245,13 @@ int main(int argc, char const* argv[]) {
                                             std::chrono::seconds(
                                                 update.arrival().time())))),
                     };
-                  stopTimes.push_back(stopTime);
+                  historic_average_predictor.loadHistoricData({stopTime});
                 }
               }
             }
           }
-          historic_average_predictor.loadHistoricData(stopTimes);
+          // free up memory
+          feed.Clear();
         }
       }
     }
