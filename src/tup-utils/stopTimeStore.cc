@@ -9,7 +9,7 @@
    */
 void stopTimeStore::store(std::string const& trip_id,
                           std::string const& stop_id,
-                          std::int64_t arrival_time,
+                          std::uint32_t arrival_time,
                           std::string date) {
   const auto key = std::make_tuple(trip_id, stop_id, date);
   stopTimes[key] = arrival_time;

@@ -21,10 +21,10 @@ struct std::hash<std::tuple<std::string, std::string, std::string>> {
  * An Event when a vehicle of a trip arrives or ends at a stop
  */
 struct stopTime {
+  std::uint32_t arrival_time;
   std::string trip_id;
   std::string stop_id;
   std::string date;
-  std::int64_t arrival_time;
 };
 
 
@@ -37,7 +37,7 @@ class stopTimeStore {
    */
 public:
   std::unordered_map<std::tuple<std::string, std::string, std::string>,
-                     std::int64_t> stopTimes;
+                     std::uint32_t> stopTimes;
   /**
    * Store the given StopTimeEvent in the hash map
    * @param trip_id to be stored
@@ -47,7 +47,7 @@ public:
    */
   void store(std::string const& trip_id,
                     std::string const& stop_id,
-                    std::int64_t arrival_time,
+                    std::uint32_t arrival_time,
                     std::string date);
   /**
    * Retrieves the average arrival time for all similar past StopTimeEvents for Prediction

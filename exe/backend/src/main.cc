@@ -228,9 +228,8 @@ int main(int argc, char const* argv[]) {
           if (!input) {
             continue;
           }
-          std::string buffer(std::istreambuf_iterator<char>(input), {});
           transit_realtime::FeedMessage feed;
-          if (!feed.ParseFromString(buffer)) {
+          if (!feed.ParseFromIstream(&input)) {
             continue;
           }
           std::vector<stopTime> stopTimes;
@@ -239,13 +238,14 @@ int main(int argc, char const* argv[]) {
               const auto& trip = entity.trip_update();
               for (const auto& update : trip.stop_time_update()) {
                 if (update.has_arrival()) {
-                  stopTime stopTime = {trip.trip().trip_id(), update.stop_id(),
+                  stopTime stopTime = {static_cast<uint32_t>(update.arrival().time() % 86400),
+                    trip.trip().trip_id(), update.stop_id(),
                        date::format("%F",
                                     date::floor<date::days>(
                                         std::chrono::system_clock::time_point(
                                             std::chrono::seconds(
                                                 update.arrival().time())))),
-                    update.arrival().time() % 86400};
+                    };
                   stopTimes.push_back(stopTime);
                 }
               }
