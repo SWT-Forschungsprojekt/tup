@@ -109,7 +109,7 @@ int main(int argc, char const* argv[]) {
       ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
       ("predictor,P", bpo::value(&predictor)->default_value("gtfs-position-tracker"), "Choose which predictor to use")
       ("in,i", bpo::value(&in)->required(), "input path")  //
-      ("protobuf_input,pi", bpo::value(&pin)->default_value("protobuf"), "input path")  //
+      ("protobuf_input,H", bpo::value(&pin)->default_value("protobuf"), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
       ("ignore", bpo::bool_switch(&ignore)->default_value(false),
