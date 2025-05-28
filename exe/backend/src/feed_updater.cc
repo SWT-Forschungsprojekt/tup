@@ -31,7 +31,7 @@ void FeedUpdater::run() {
     if (!downloadFeed()) {
       std::cerr << "Fehler beim Aktualisieren des Feeds." << std::endl;
     }
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(20));
   }
 }
 
