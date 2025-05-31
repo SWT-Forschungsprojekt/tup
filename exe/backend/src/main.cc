@@ -109,7 +109,7 @@ int main(int argc, char const* argv[]) {
       ("vehicle_positions_url,v", bpo::value(&vehicle_position_url)->required(), "URL for vehicle positions")  //
       ("predictor,P", bpo::value(&predictor)->default_value("gtfs-position-tracker"), "Choose which predictor to use")
       ("in,i", bpo::value(&in)->required(), "input path")  //
-      ("protobuf_input,pi", bpo::value(&pin)->default_value("protobuf"), "input path")  //
+      ("protobuf_input,H", bpo::value(&pin)->default_value("protobuf"), "input path")  //
       ("recursive,r", bpo::bool_switch(&recursive)->default_value(false),
        "read all zips and directories from the input directory")  //
       ("ignore", bpo::bool_switch(&ignore)->default_value(false),
@@ -228,30 +228,30 @@ int main(int argc, char const* argv[]) {
           if (!input) {
             continue;
           }
-          std::string buffer(std::istreambuf_iterator<char>(input), {});
           transit_realtime::FeedMessage feed;
-          if (!feed.ParseFromString(buffer)) {
+          if (!feed.ParseFromIstream(&input)) {
             continue;
           }
-          std::vector<stopTime> stopTimes;
           for (const auto& entity : feed.entity()) {
             if (entity.has_trip_update()) {
               const auto& trip = entity.trip_update();
               for (const auto& update : trip.stop_time_update()) {
                 if (update.has_arrival()) {
-                  stopTime stopTime = {trip.trip().trip_id(), update.stop_id(),
+                  stopTime stopTime = {static_cast<uint32_t>(update.arrival().time() % 86400),
+                    trip.trip().trip_id(), update.stop_id(),
                        date::format("%F",
                                     date::floor<date::days>(
                                         std::chrono::system_clock::time_point(
                                             std::chrono::seconds(
                                                 update.arrival().time())))),
-                    update.arrival().time() % 86400};
-                  stopTimes.push_back(stopTime);
+                    };
+                  historic_average_predictor.loadHistoricData({stopTime});
                 }
               }
             }
           }
-          historic_average_predictor.loadHistoricData(stopTimes);
+          // free up memory
+          feed.Clear();
         }
       }
     }
